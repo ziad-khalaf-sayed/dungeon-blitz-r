@@ -19,6 +19,13 @@ export interface PendingTransfer {
     syncStartedRoomIds?: number[];
 }
 
+export type SharedDungeonProgressState = {
+    progress: number;
+    authorityToken: number;
+    trackedHostileIds?: Set<number>;
+    defeatedHostileIds?: Set<number>;
+};
+
 export class GlobalState {
     // Token -> Pending Transfer
     static pendingWorld: Map<number, PendingTransfer> = new Map();
@@ -54,7 +61,7 @@ export class GlobalState {
 
     // Level scope key -> Map<EntityId, EntityData>
     static levelEntities: Map<string, Map<number, any>> = new Map();
-    static levelQuestProgress: Map<string, { progress: number; authorityToken: number }> = new Map();
+    static levelQuestProgress: Map<string, SharedDungeonProgressState> = new Map();
     static combatContributions: Map<string, Map<string, number>> = new Map();
     static entityLifeNonces: Map<string, number> = new Map();
     static entityLastRewardNonces: Map<string, number> = new Map();

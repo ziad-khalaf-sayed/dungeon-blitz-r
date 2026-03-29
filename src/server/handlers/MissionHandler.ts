@@ -5,8 +5,8 @@ import { getClientLevelScope } from '../core/LevelScope';
 import {
     getOrCreateSharedDungeonProgressState,
     hasSharedDungeonProgressHostiles,
+    recomputeSharedDungeonProgress,
     resolveSharedDungeonProgressAuthorityToken,
-    setSharedDungeonProgressState,
     usesSharedDungeonProgress
 } from '../core/SharedDungeonProgress';
 import { Character } from '../database/Database';
@@ -170,7 +170,7 @@ export class MissionHandler {
             (requiredKills > 0 && remainingKills <= 0);
 
         if (usesSharedDungeonProgress(currentLevel) && levelScope) {
-            const sharedState = getOrCreateSharedDungeonProgressState(levelScope);
+            const sharedState = recomputeSharedDungeonProgress(levelScope) ?? getOrCreateSharedDungeonProgressState(levelScope);
             if (sharedState) {
                 if (sharedState.progress < 100) {
                     if (!hasSharedDungeonProgressHostiles(levelScope)) {

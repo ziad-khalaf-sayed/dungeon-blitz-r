@@ -147,6 +147,23 @@ async function testGoblinRiverQuestProgressFollowsHostileOwnerAuthority(): Promi
                 isPlayer: false,
                 team: 2,
                 entState: 0,
+                hp: 100,
+                clientSpawned: true,
+                ownerToken: authority.token,
+                ownerPartyId: 77,
+                roomId: 1
+            }
+        ],
+        [
+            5002,
+            {
+                id: 5002,
+                name: 'GoblinDagger',
+                isPlayer: false,
+                team: 2,
+                entState: 6,
+                hp: 0,
+                dead: true,
                 clientSpawned: true,
                 ownerToken: authority.token,
                 ownerPartyId: 77,
@@ -157,18 +174,13 @@ async function testGoblinRiverQuestProgressFollowsHostileOwnerAuthority(): Promi
 
     await LevelHandler.handleQuestProgressUpdate(joiner as never, createQuestProgressPacket(100));
 
-    assert.equal(joiner.character.questTrackerState, 0, 'non-leader joiner progress should be ignored until the leader updates');
-    assert.equal(authority.character.questTrackerState, 0, 'leader progress should stay unchanged after the joiner reports false completion');
+    assert.equal(joiner.character.questTrackerState, 50, 'joiner progress should be recomputed from the server hostile state');
+    assert.equal(authority.character.questTrackerState, 50, 'leader progress should follow the same shared server-computed state');
     assert.deepEqual(
         joiner.sentPackets.filter((packet) => packet.id === 0xB7).map((packet) => parseQuestProgress(packet.payload)),
-        [0],
-        'joiner should be corrected back to the shared leader-authoritative progress'
+        [50],
+        'joiner should be corrected to the shared server-computed progress'
     );
-
-    await LevelHandler.handleQuestProgressUpdate(authority as never, createQuestProgressPacket(42));
-
-    assert.equal(authority.character.questTrackerState, 42);
-    assert.equal(joiner.character.questTrackerState, 42);
 }
 
 async function testGoblinRiverLevelCompleteWaitsForSharedProgressCompletion(): Promise<void> {
@@ -187,6 +199,7 @@ async function testGoblinRiverLevelCompleteWaitsForSharedProgressCompletion(): P
                 isPlayer: false,
                 team: 2,
                 entState: 0,
+                hp: 100,
                 clientSpawned: true,
                 ownerToken: authority.token,
                 ownerPartyId: 77,
@@ -200,24 +213,30 @@ async function testGoblinRiverLevelCompleteWaitsForSharedProgressCompletion(): P
     assert.equal(
         joiner.sentPackets.some((packet) => packet.id === 0x87),
         false,
-        'non-leader joiner should not complete the dungeon while leader-owned progress is incomplete'
+        'joiner should not complete the dungeon while server-computed progress is incomplete'
     );
 
     await LevelHandler.handleQuestProgressUpdate(joiner as never, createQuestProgressPacket(100));
-    assert.equal(joiner.character.questTrackerState, 0, 'joiner false completion should still be ignored before the leader updates');
+    assert.equal(joiner.character.questTrackerState, 0, 'joiner false completion should still be ignored before the server sees the hostile die');
 
-    await LevelHandler.handleQuestProgressUpdate(authority as never, createQuestProgressPacket(100));
+    const hostile = GlobalState.levelEntities.get('GoblinRiverDungeon#goblin-shared')?.get(5101);
+    assert.ok(hostile, 'canonical hostile should exist');
+    hostile.hp = 0;
+    hostile.dead = true;
+    hostile.entState = 6;
+
+    LevelHandler.refreshSharedDungeonQuestProgress('GoblinRiverDungeon#goblin-shared');
     await MissionHandler.handleSetLevelComplete(authority as never, createLevelCompletePacket());
 
     assert.equal(
         authority.sentPackets.some((packet) => packet.id === 0x87),
         true,
-        'leader should complete the dungeon once shared progress reaches 100%'
+        'leader should complete the dungeon once server-computed shared progress reaches 100%'
     );
     assert.deepEqual(
         joiner.sentPackets.filter((packet) => packet.id === 0xB7).map((packet) => parseQuestProgress(packet.payload)).slice(-1),
         [100],
-        'joiner should receive the shared 100% progress before completion'
+        'joiner should receive the shared server-computed 100% progress before completion'
     );
 }
 

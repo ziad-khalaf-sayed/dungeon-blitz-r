@@ -6,7 +6,12 @@ import { LevelHandler } from './LevelHandler';
 import { EntityState, EntityTeam } from '../core/Entity';
 import { EntityHandler } from './EntityHandler';
 import { areClientsInSameParty, getClientCharacterKey, sharesRoomIds, shouldShareCombatView } from '../core/PartySync';
-import { areClientsInSameLevelScope, getClientLevelScope } from '../core/LevelScope';
+import { areClientsInSameLevelScope, getClientLevelScope, getScopeLevelName } from '../core/LevelScope';
+import {
+    noteSharedDungeonHostileDestroyed,
+    noteSharedDungeonHostileState,
+    usesSharedDungeonProgress
+} from '../core/SharedDungeonProgress';
 
 type CombatRelayOptions = {
     includeAnchor?: boolean;
@@ -805,6 +810,11 @@ export class CombatHandler {
             entity.dead = true;
             entity.entState = EntityState.DEAD;
         }
+
+        if (usesSharedDungeonProgress(getScopeLevelName(levelName))) {
+            noteSharedDungeonHostileState(levelName, targetId, entity);
+            LevelHandler.refreshSharedDungeonQuestProgress(levelName);
+        }
     }
 
     private static parseReferencedEntityIds(packetId: number, data: Buffer): number[] {
@@ -986,6 +996,9 @@ export class CombatHandler {
         client.entities.delete(entityId);
 
         if (levelScope) {
+            if (usesSharedDungeonProgress(getScopeLevelName(levelScope)) && destroyedEntity) {
+                noteSharedDungeonHostileDestroyed(levelScope, entityId, destroyedEntity);
+            }
             const levelMap = GlobalState.levelEntities.get(levelScope);
             levelMap?.delete(entityId);
             if (levelMap && levelMap.size === 0) {
@@ -993,6 +1006,9 @@ export class CombatHandler {
             }
             CombatHandler.noteEntityDestroyed(levelScope, entityId);
             EntityHandler.forgetKnownEntity(levelName, entityId, client.levelInstanceId);
+            if (usesSharedDungeonProgress(getScopeLevelName(levelScope)) && destroyedEntity) {
+                LevelHandler.refreshSharedDungeonQuestProgress(levelScope);
+            }
         }
 
         if (shouldRelayDestroy) {
@@ -1041,6 +1057,15 @@ export class CombatHandler {
                 levelEntity.entState = EntityState.ACTIVE;
                 levelEntity.hp = healAmount;
                 levelEntity.maxHp = Math.max(Math.round(Number(levelEntity.maxHp ?? 0)), healAmount);
+            }
+        }
+
+        const levelScope = getClientLevelScope(client);
+        if (usesSharedDungeonProgress(getScopeLevelName(levelScope))) {
+            const levelEntity = CombatHandler.resolveLevelEntity(levelScope, entId);
+            if (levelEntity && !levelEntity.isPlayer) {
+                noteSharedDungeonHostileState(levelScope, entId, levelEntity);
+                LevelHandler.refreshSharedDungeonQuestProgress(levelScope);
             }
         }
 

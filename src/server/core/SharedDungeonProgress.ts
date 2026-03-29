@@ -1,8 +1,9 @@
-import { GlobalState } from './GlobalState';
+import { GlobalState, SharedDungeonProgressState } from './GlobalState';
 import { LevelConfig } from './LevelConfig';
 import { getClientLevelScope } from './LevelScope';
 import { getPartyLeaderCharacterKeyForClient } from './PartySync';
 import { normalizeCharacterKey } from './SocialState';
+import { EntityState } from './Entity';
 
 const SHARED_DUNGEON_PROGRESS_LEVELS = new Set<string>([
     'GoblinRiverDungeon',
@@ -30,7 +31,7 @@ export function usesSharedDungeonProgress(levelName: string | null | undefined):
 
 export function getSharedDungeonProgressState(
     levelScope: string | null | undefined
-): { progress: number; authorityToken: number } | null {
+): SharedDungeonProgressState | null {
     const scopeKey = String(levelScope ?? '').trim();
     if (!scopeKey) {
         return null;
@@ -43,12 +44,14 @@ export function getSharedDungeonProgressState(
 
     state.progress = clampProgress(state.progress);
     state.authorityToken = normalizeAuthorityToken(state.authorityToken);
+    state.trackedHostileIds ??= new Set<number>();
+    state.defeatedHostileIds ??= new Set<number>();
     return state;
 }
 
 export function getOrCreateSharedDungeonProgressState(
     levelScope: string | null | undefined
-): { progress: number; authorityToken: number } | null {
+): SharedDungeonProgressState | null {
     const scopeKey = String(levelScope ?? '').trim();
     if (!scopeKey) {
         return null;
@@ -59,9 +62,32 @@ export function getOrCreateSharedDungeonProgressState(
         return existing;
     }
 
-    const created = { progress: 0, authorityToken: 0 };
+    const created: SharedDungeonProgressState = {
+        progress: 0,
+        authorityToken: 0,
+        trackedHostileIds: new Set<number>(),
+        defeatedHostileIds: new Set<number>()
+    };
     GlobalState.levelQuestProgress.set(scopeKey, created);
     return created;
+}
+
+function isSharedDungeonTrackedHostile(entity: any): boolean {
+    if (!entity || entity.isPlayer) {
+        return false;
+    }
+
+    if (!entity.clientSpawned || Number(entity.team ?? 0) !== 2) {
+        return false;
+    }
+
+    return true;
+}
+
+function isEntityDefeated(entity: any): boolean {
+    return Boolean(entity?.dead) ||
+        Number(entity?.hp ?? 1) <= 0 ||
+        Number(entity?.entState ?? 0) === EntityState.DEAD;
 }
 
 export function resolveSharedDungeonProgressAuthorityToken(levelScope: string | null | undefined): number {
@@ -134,23 +160,104 @@ export function hasSharedDungeonProgressHostiles(levelScope: string | null | und
         return false;
     }
 
+    return getSharedDungeonProgressTotals(scopeKey).total > 0;
+}
+
+export function noteSharedDungeonHostileState(levelScope: string | null | undefined, entityId: number, entity: any): void {
+    if (!entityId || !isSharedDungeonTrackedHostile(entity)) {
+        return;
+    }
+
+    const state = getOrCreateSharedDungeonProgressState(levelScope);
+    if (!state) {
+        return;
+    }
+
+    state.trackedHostileIds?.add(entityId);
+    if (isEntityDefeated(entity)) {
+        state.defeatedHostileIds?.add(entityId);
+    } else {
+        state.defeatedHostileIds?.delete(entityId);
+    }
+}
+
+export function noteSharedDungeonHostileDestroyed(levelScope: string | null | undefined, entityId: number, entity: any): void {
+    if (!entityId || !isSharedDungeonTrackedHostile(entity)) {
+        return;
+    }
+
+    const state = getOrCreateSharedDungeonProgressState(levelScope);
+    if (!state) {
+        return;
+    }
+
+    state.trackedHostileIds?.add(entityId);
+    if (isEntityDefeated(entity)) {
+        state.defeatedHostileIds?.add(entityId);
+    }
+}
+
+export function getSharedDungeonProgressTotals(
+    levelScope: string | null | undefined
+): { total: number; defeated: number } {
+    const scopeKey = String(levelScope ?? '').trim();
+    if (!scopeKey) {
+        return { total: 0, defeated: 0 };
+    }
+
+    const state = getOrCreateSharedDungeonProgressState(scopeKey);
+    if (!state) {
+        return { total: 0, defeated: 0 };
+    }
+
+    const tracked = state.trackedHostileIds ?? new Set<number>();
+    const defeated = state.defeatedHostileIds ?? new Set<number>();
     const levelMap = GlobalState.levelEntities.get(scopeKey);
-    for (const entity of levelMap?.values() ?? []) {
-        if (!entity || entity.isPlayer || Number(entity.team ?? 0) !== 2) {
+
+    for (const [entityId, entity] of levelMap?.entries() ?? []) {
+        if (!isSharedDungeonTrackedHostile(entity)) {
             continue;
         }
 
-        return true;
+        tracked.add(entityId);
+        if (isEntityDefeated(entity)) {
+            defeated.add(entityId);
+        } else {
+            defeated.delete(entityId);
+        }
     }
 
-    return false;
+    let defeatedCount = 0;
+    for (const entityId of defeated.values()) {
+        if (tracked.has(entityId)) {
+            defeatedCount++;
+        }
+    }
+
+    return {
+        total: tracked.size,
+        defeated: defeatedCount
+    };
+}
+
+export function recomputeSharedDungeonProgress(levelScope: string | null | undefined): SharedDungeonProgressState | null {
+    const state = getOrCreateSharedDungeonProgressState(levelScope);
+    if (!state) {
+        return null;
+    }
+
+    const totals = getSharedDungeonProgressTotals(levelScope);
+    state.progress = totals.total > 0
+        ? clampProgress((totals.defeated / totals.total) * 100)
+        : 0;
+    return state;
 }
 
 export function setSharedDungeonProgressState(
     levelScope: string | null | undefined,
     progress: number,
     authorityToken?: number
-): { progress: number; authorityToken: number } | null {
+): SharedDungeonProgressState | null {
     const state = getOrCreateSharedDungeonProgressState(levelScope);
     if (!state) {
         return null;

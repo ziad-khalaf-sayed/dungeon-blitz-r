@@ -25,8 +25,8 @@ import { areClientsInSameParty, getPartyIdForClient, sharesRoomIds } from '../co
 import {
     getOrCreateSharedDungeonProgressState,
     hasSharedDungeonProgressHostiles,
+    recomputeSharedDungeonProgress,
     resolveSharedDungeonProgressAuthorityToken,
-    setSharedDungeonProgressState,
     usesSharedDungeonProgress
 } from '../core/SharedDungeonProgress';
 import {
@@ -679,6 +679,25 @@ export class LevelHandler {
         }
     }
 
+    static refreshSharedDungeonQuestProgress(levelScope: string | null | undefined): number {
+        const scopeKey = String(levelScope ?? '').trim();
+        if (!scopeKey) {
+            return 0;
+        }
+
+        const sharedState = recomputeSharedDungeonProgress(scopeKey);
+        const progress = sharedState?.progress ?? 0;
+        if (sharedState) {
+            const authorityToken = resolveSharedDungeonProgressAuthorityToken(scopeKey);
+            if (authorityToken > 0) {
+                sharedState.authorityToken = authorityToken;
+            }
+        }
+
+        LevelHandler.broadcastSharedDungeonQuestProgress(scopeKey, progress);
+        return progress;
+    }
+
     static syncSharedDungeonQuestProgressState(client: Client): void {
         if (!client.currentLevel || !client.character || !usesSharedDungeonProgress(client.currentLevel)) {
             return;
@@ -694,6 +713,7 @@ export class LevelHandler {
             return;
         }
 
+        recomputeSharedDungeonProgress(levelScope);
         const authorityToken = resolveSharedDungeonProgressAuthorityToken(levelScope);
         if (authorityToken > 0) {
             sharedState.authorityToken = authorityToken;
@@ -2506,27 +2526,13 @@ export class LevelHandler {
 
         const levelScope = getClientLevelScope(client);
         if (usesSharedDungeonProgress(currentLevel) && levelScope) {
-            const sharedState = getOrCreateSharedDungeonProgressState(levelScope);
+            const sharedState = recomputeSharedDungeonProgress(levelScope);
             if (sharedState) {
-                if (!hasSharedDungeonProgressHostiles(levelScope)) {
-                    progress = 0;
-                } else {
                 const liveAuthorityToken = resolveSharedDungeonProgressAuthorityToken(levelScope);
                 if (liveAuthorityToken > 0) {
                     sharedState.authorityToken = liveAuthorityToken;
                 }
-
-                    progress = sharedState.progress;
-                    if (sharedState.authorityToken > 0) {
-                        if (client.token === sharedState.authorityToken) {
-                            progress = Math.max(sharedState.progress, requestedProgress);
-                            setSharedDungeonProgressState(levelScope, progress, sharedState.authorityToken);
-                        }
-                    } else {
-                        progress = Math.max(sharedState.progress, requestedProgress);
-                        setSharedDungeonProgressState(levelScope, progress);
-                    }
-                }
+                progress = hasSharedDungeonProgressHostiles(levelScope) ? sharedState.progress : 0;
             } else {
                 progress = 0;
             }
