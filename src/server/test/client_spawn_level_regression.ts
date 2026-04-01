@@ -92,6 +92,32 @@ function parseRoomEventStart(payload: Buffer): { roomId: number; flag: boolean }
     };
 }
 
+function createGoblinRiverHostile(
+    id: number,
+    name: string,
+    ownerToken: number,
+    ownerPartyId: number,
+    roomId: number,
+    x: number = 120,
+    y: number = 220
+): any {
+    return {
+        id,
+        name,
+        isPlayer: false,
+        x,
+        y,
+        v: 0,
+        team: 2,
+        renderDepthOffset: 0,
+        entState: 0,
+        clientSpawned: true,
+        ownerToken,
+        ownerPartyId,
+        roomId
+    };
+}
+
 function testConfiguredLevelsUseClientSpawn(): void {
     for (const levelName of [
         'CraftTown',
@@ -967,8 +993,8 @@ function testDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor(): void {
     const anchor = createFakeClient('Alpha');
     const joiner = createFakeClient('Beta');
 
-    anchor.currentLevel = 'TutorialDungeon';
-    joiner.currentLevel = 'TutorialDungeon';
+    anchor.currentLevel = 'TutorialBoat';
+    joiner.currentLevel = 'TutorialBoat';
     anchor.levelInstanceId = '41035';
     joiner.levelInstanceId = '41035';
     anchor.currentRoomId = 5;
@@ -978,10 +1004,10 @@ function testDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor(): void {
     anchor.clientEntID = 7001;
     joiner.clientEntID = 7002;
 
-    anchor.startedRoomEvents.add('TutorialDungeon:0');
-    anchor.startedRoomEvents.add('TutorialDungeon:1');
-    anchor.startedRoomEvents.add('TutorialDungeon:5');
-    joiner.startedRoomEvents.add('TutorialDungeon:0');
+    anchor.startedRoomEvents.add('TutorialBoat:0');
+    anchor.startedRoomEvents.add('TutorialBoat:1');
+    anchor.startedRoomEvents.add('TutorialBoat:5');
+    joiner.startedRoomEvents.add('TutorialBoat:0');
 
     const anchorProps = {
         id: anchor.clientEntID,
@@ -1021,8 +1047,8 @@ function testDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor(): void {
         'joiner should replay missing dungeon room starts from the party anchor only once'
     );
     assert.equal(joiner.currentRoomId, 5, 'joiner should inherit the party anchor room before visible client-spawn seeding');
-    assert.equal(joiner.startedRoomEvents.has('TutorialDungeon:1'), true);
-    assert.equal(joiner.startedRoomEvents.has('TutorialDungeon:5'), true);
+    assert.equal(joiner.startedRoomEvents.has('TutorialBoat:1'), true);
+    assert.equal(joiner.startedRoomEvents.has('TutorialBoat:5'), true);
 }
 
 function testGoblinRiverDungeonLeaderHostilesSeedToPartyJoinersOnly(): void {
@@ -1089,21 +1115,13 @@ function testGoblinRiverDungeonSuppressesFollowerClientHostileSpawns(): void {
         leader.currentRoomId = 4;
         follower.currentRoomId = 0;
 
-        const canonical = {
-            id: 5302,
-            name: 'GoblinArmorAxe',
-            isPlayer: false,
-            x: 120,
-            y: 220,
-            v: 0,
-            team: 2,
-            renderDepthOffset: 0,
-            entState: 0,
-            clientSpawned: true,
-            ownerToken: leader.token,
-            ownerPartyId: 198,
-            roomId: leader.currentRoomId
-        };
+        const canonical = createGoblinRiverHostile(
+            5302,
+            'GoblinArmorAxe',
+            leader.token,
+            198,
+            leader.currentRoomId
+        );
 
         GlobalState.levelEntities.set(`${levelName}#gr-unsynced`, new Map([[canonical.id, canonical]]));
         GlobalState.sessionsByToken.set(leader.token, leader as never);
@@ -1112,21 +1130,15 @@ function testGoblinRiverDungeonSuppressesFollowerClientHostileSpawns(): void {
         GlobalState.partyByMember.set('beta', 198);
         GlobalState.partyGroups.set(198, { id: 198, leader: 'Alpha', members: ['Alpha', 'Beta'], locked: false });
 
-        const duplicate = {
-            id: 6302,
-            name: canonical.name,
-            isPlayer: false,
-            x: canonical.x,
-            y: canonical.y,
-            v: canonical.v,
-            team: canonical.team,
-            renderDepthOffset: canonical.renderDepthOffset ?? 0,
-            entState: canonical.entState ?? 0,
-            clientSpawned: true,
-            ownerToken: follower.token,
-            ownerPartyId: 198,
-            roomId: follower.currentRoomId
-        };
+        const duplicate = createGoblinRiverHostile(
+            6302,
+            canonical.name,
+            follower.token,
+            198,
+            follower.currentRoomId,
+            canonical.x,
+            canonical.y
+        );
 
         const suppressed = (EntityHandler as any).suppressFollowerLeaderAuthoritativeDungeonSpawn(
             follower as never,
@@ -1149,7 +1161,141 @@ function testGoblinRiverDungeonSuppressesFollowerClientHostileSpawns(): void {
     }
 }
 
-function testGoblinRiverDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor(): void {
+function testTutorialDungeonJoinerSkipsStartedRoomReplayFromPartyAnchor(): void {
+    const anchor = createFakeClient('Alpha');
+    const joiner = createFakeClient('Beta');
+
+    anchor.currentLevel = 'TutorialDungeon';
+    joiner.currentLevel = 'TutorialDungeon';
+    anchor.currentRoomId = 6;
+    joiner.currentRoomId = 0;
+    anchor.syncAnchorStartedAt = 100;
+    joiner.syncAnchorStartedAt = 50;
+    anchor.clientEntID = 7101;
+    joiner.clientEntID = 7102;
+
+    anchor.startedRoomEvents.add('TutorialDungeon:0');
+    anchor.startedRoomEvents.add('TutorialDungeon:3');
+    anchor.startedRoomEvents.add('TutorialDungeon:6');
+    joiner.startedRoomEvents.add('TutorialDungeon:0');
+
+    anchor.entities.set(anchor.clientEntID, {
+        id: anchor.clientEntID,
+        name: 'Alpha',
+        isPlayer: true,
+        x: 100,
+        y: 200,
+        team: 1,
+        entState: 0
+    });
+    joiner.entities.set(joiner.clientEntID, {
+        id: joiner.clientEntID,
+        name: 'Beta',
+        isPlayer: true,
+        x: 120,
+        y: 200,
+        team: 1,
+        entState: 0
+    });
+
+    GlobalState.sessionsByToken.set(anchor.token, anchor as never);
+    GlobalState.sessionsByToken.set(joiner.token, joiner as never);
+    GlobalState.partyByMember.set('alpha', 277);
+    GlobalState.partyByMember.set('beta', 277);
+
+    (EntityHandler as any).sendExistingPlayersToJoiner(joiner as never);
+
+    const roomPackets = joiner.sentPackets.filter((packet) => packet.id === 0xA5);
+    assert.deepEqual(roomPackets, [], 'TutorialDungeon joiner should not replay advanced room starts from the party anchor');
+    assert.equal(joiner.currentRoomId, 0);
+    assert.equal(joiner.startedRoomEvents.has('TutorialDungeon:3'), false);
+    assert.equal(joiner.startedRoomEvents.has('TutorialDungeon:6'), false);
+}
+
+function testGoblinRiverDungeonAllowsFollowerFirstCanonicalHostileSpawn(): void {
+    for (const levelName of GOBLIN_RIVER_LEVELS) {
+        const leader = createFakeClient('Alpha');
+        const follower = createFakeClient('Beta');
+        leader.currentLevel = levelName;
+        follower.currentLevel = levelName;
+        leader.levelInstanceId = 'gr-follower-first';
+        follower.levelInstanceId = 'gr-follower-first';
+        leader.currentRoomId = 4;
+        follower.currentRoomId = 0;
+
+        GlobalState.levelEntities.set(`${levelName}#gr-follower-first`, new Map<number, any>());
+        GlobalState.sessionsByToken.set(leader.token, leader as never);
+        GlobalState.sessionsByToken.set(follower.token, follower as never);
+        GlobalState.partyByMember.set('alpha', 211);
+        GlobalState.partyByMember.set('beta', 211);
+        GlobalState.partyGroups.set(211, { id: 211, leader: 'Alpha', members: ['Alpha', 'Beta'], locked: false });
+
+        const followerHostile = createGoblinRiverHostile(6401, 'GoblinArmorAxe', follower.token, 211, follower.currentRoomId);
+
+        const suppressed = (EntityHandler as any).suppressFollowerLeaderAuthoritativeDungeonSpawn(
+            follower as never,
+            levelName,
+            GlobalState.levelEntities.get(`${levelName}#gr-follower-first`),
+            followerHostile
+        );
+
+        assert.equal(suppressed, false, `${levelName} should keep the first follower hostile when no canonical shared hostile exists`);
+        assert.deepEqual(follower.sentPackets, [], `${levelName} follower should not receive destroy or replacement packets before canonical hostile exists`);
+    }
+}
+
+function testGoblinRiverDungeonLeaderLateSpawnDedupesToFollowerCanonical(): void {
+    for (const levelName of GOBLIN_RIVER_LEVELS) {
+        const leader = createFakeClient('Alpha');
+        const follower = createFakeClient('Beta');
+        leader.currentLevel = levelName;
+        follower.currentLevel = levelName;
+        leader.levelInstanceId = 'gr-late-leader';
+        follower.levelInstanceId = 'gr-late-leader';
+        leader.currentRoomId = 4;
+        follower.currentRoomId = 0;
+
+        const canonical = createGoblinRiverHostile(7401, 'GoblinArmorAxe', follower.token, 233, follower.currentRoomId);
+        const levelMap = new Map<number, any>([[canonical.id, canonical]]);
+
+        GlobalState.levelEntities.set(`${levelName}#gr-late-leader`, levelMap);
+        GlobalState.sessionsByToken.set(leader.token, leader as never);
+        GlobalState.sessionsByToken.set(follower.token, follower as never);
+        GlobalState.partyByMember.set('alpha', 233);
+        GlobalState.partyByMember.set('beta', 233);
+        GlobalState.partyGroups.set(233, { id: 233, leader: 'Alpha', members: ['Alpha', 'Beta'], locked: false });
+
+        const leaderDuplicate = createGoblinRiverHostile(
+            7402,
+            canonical.name,
+            leader.token,
+            233,
+            leader.currentRoomId,
+            canonical.x,
+            canonical.y
+        );
+
+        const suppressed = (EntityHandler as any).suppressDuplicateSharedClientSpawn(
+            leader as never,
+            levelName,
+            levelMap,
+            leaderDuplicate
+        );
+
+        assert.equal(suppressed, true, `${levelName} leader should adopt existing follower-authored canonical hostile`);
+        assert.deepEqual(
+            leader.sentPackets.map((packet) => packet.id),
+            [0x0D, 0x0F],
+            `${levelName} late leader should destroy its duplicate and receive the follower canonical hostile`
+        );
+        assert.equal(parseDestroyEntityId(leader.sentPackets[0]!.payload), 7402);
+        assert.equal(leader.knownEntityIds.has(canonical.id), true);
+        assert.equal(leader.knownEntityIds.has(7402), false);
+        assert.equal(levelMap.size, 1, `${levelName} late leader dedupe should keep only the canonical hostile in scope`);
+    }
+}
+
+function testGoblinRiverDungeonJoinerSkipsStartedRoomReplayFromPartyAnchor(): void {
     for (const levelName of GOBLIN_RIVER_LEVELS) {
         const anchor = createFakeClient('Alpha');
         const joiner = createFakeClient('Beta');
@@ -1197,17 +1343,10 @@ function testGoblinRiverDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor(): 
         (EntityHandler as any).sendExistingPlayersToJoiner(joiner as never);
 
         const roomPackets = joiner.sentPackets.filter((packet) => packet.id === 0xA5);
-        assert.deepEqual(
-            roomPackets.map((packet) => parseRoomEventStart(packet.payload)),
-            [
-                { roomId: 3, flag: true },
-                { roomId: 6, flag: true }
-            ],
-            `${levelName} joiner should replay only missing room starts from the anchor`
-        );
-        assert.equal(joiner.currentRoomId, 6, `${levelName} joiner should inherit the anchor room before hostile seeding`);
-        assert.equal(joiner.startedRoomEvents.has(`${levelName}:3`), true);
-        assert.equal(joiner.startedRoomEvents.has(`${levelName}:6`), true);
+        assert.deepEqual(roomPackets, [], `${levelName} joiner should not replay advanced room starts from the party anchor`);
+        assert.equal(joiner.currentRoomId, 0, `${levelName} joiner should keep its fresh intro room state`);
+        assert.equal(joiner.startedRoomEvents.has(`${levelName}:3`), false);
+        assert.equal(joiner.startedRoomEvents.has(`${levelName}:6`), false);
     }
 }
 
@@ -1217,9 +1356,11 @@ function main(): void {
     const levelEntities = new Map(GlobalState.levelEntities);
     const sessionsByToken = new Map(GlobalState.sessionsByToken);
     const partyByMember = new Map(GlobalState.partyByMember);
+    const partyGroups = new Map(GlobalState.partyGroups);
     GlobalState.levelEntities.clear();
     GlobalState.sessionsByToken.clear();
     GlobalState.partyByMember.clear();
+    GlobalState.partyGroups.clear();
 
     try {
         testConfiguredLevelsUseClientSpawn();
@@ -1267,6 +1408,12 @@ function main(): void {
         GlobalState.levelEntities.clear();
         GlobalState.sessionsByToken.clear();
         GlobalState.partyByMember.clear();
+        GlobalState.partyGroups.clear();
+        testGoblinRiverDungeonAllowsFollowerFirstCanonicalHostileSpawn();
+
+        GlobalState.levelEntities.clear();
+        GlobalState.sessionsByToken.clear();
+        GlobalState.partyByMember.clear();
         testDungeonPartyAuthoritySuppressesDuplicateHostileSpawns();
 
         GlobalState.levelEntities.clear();
@@ -1278,6 +1425,12 @@ function main(): void {
         GlobalState.sessionsByToken.clear();
         GlobalState.partyByMember.clear();
         testGoblinRiverDungeonSuppressesFollowerClientHostileSpawns();
+
+        GlobalState.levelEntities.clear();
+        GlobalState.sessionsByToken.clear();
+        GlobalState.partyByMember.clear();
+        GlobalState.partyGroups.clear();
+        testGoblinRiverDungeonLeaderLateSpawnDedupesToFollowerCanonical();
 
         GlobalState.levelEntities.clear();
         GlobalState.sessionsByToken.clear();
@@ -1342,11 +1495,17 @@ function main(): void {
         GlobalState.levelEntities.clear();
         GlobalState.sessionsByToken.clear();
         GlobalState.partyByMember.clear();
-        testGoblinRiverDungeonJoinerReplaysStartedRoomEventsFromPartyAnchor();
+        testTutorialDungeonJoinerSkipsStartedRoomReplayFromPartyAnchor();
+
+        GlobalState.levelEntities.clear();
+        GlobalState.sessionsByToken.clear();
+        GlobalState.partyByMember.clear();
+        testGoblinRiverDungeonJoinerSkipsStartedRoomReplayFromPartyAnchor();
     } finally {
         GlobalState.levelEntities = levelEntities;
         GlobalState.sessionsByToken = sessionsByToken;
         GlobalState.partyByMember = partyByMember;
+        GlobalState.partyGroups = partyGroups;
     }
 
     console.log('client_spawn_level_regression: ok');

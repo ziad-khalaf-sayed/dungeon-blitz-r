@@ -44,6 +44,11 @@ export class EntityHandler {
         'GoblinRiverDungeon',
         'GoblinRiverDungeonHard'
     ]);
+    private static readonly GOBLIN_RIVER_ROOM_SYNC_SKIP_LEVELS = new Set<string>([
+        'TutorialDungeon',
+        'GoblinRiverDungeon',
+        'GoblinRiverDungeonHard'
+    ]);
 
     private static normalizeIdentityName(value: unknown): string {
         return String(value ?? '')
@@ -58,6 +63,10 @@ export class EntityHandler {
 
     private static usesLeaderAuthoritativeClientSpawns(levelName: string | null | undefined): boolean {
         return Boolean(levelName) && EntityHandler.LEADER_AUTHORITATIVE_CLIENT_SPAWN_LEVELS.has(String(levelName));
+    }
+
+    private static shouldSkipDungeonRoomProgressSync(levelName: string | null | undefined): boolean {
+        return Boolean(levelName) && EntityHandler.GOBLIN_RIVER_ROOM_SYNC_SKIP_LEVELS.has(String(levelName));
     }
 
     private static isPrivateClientSpawnOutdoorEntity(levelName: string | null | undefined, entity: any): boolean {
@@ -195,11 +204,14 @@ export class EntityHandler {
         const canonical =
             (levelMap && levelMap.get(Number(entity.id ?? 0))) ??
             EntityHandler.findLeaderAuthoritativeClientSpawnMatch(levelMap, entity);
+        // Non-leader suppression is only valid after a canonical shared hostile
+        // already exists in-scope and can replace the follower's local spawn.
+        if (!canonical) {
+            return false;
+        }
 
         EntityHandler.sendDestroyEntity(client, Number(entity.id ?? 0));
-        if (canonical) {
-            EntityHandler.ensureEntityKnown(client, String(levelName ?? ''), Number(canonical.id ?? 0));
-        }
+        EntityHandler.ensureEntityKnown(client, String(levelName ?? ''), Number(canonical.id ?? 0));
         return true;
     }
 
@@ -526,6 +538,9 @@ export class EntityHandler {
     private static replayStartedDungeonRoomEventsToJoiner(joiner: Client): void {
         const levelName = LevelConfig.normalizeLevelName(joiner.currentLevel);
         if (!levelName || !LevelConfig.isDungeonLevel(levelName) || !joiner.playerSpawned) {
+            return;
+        }
+        if (EntityHandler.shouldSkipDungeonRoomProgressSync(levelName)) {
             return;
         }
 

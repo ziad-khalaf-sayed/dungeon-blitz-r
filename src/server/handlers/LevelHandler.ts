@@ -61,6 +61,8 @@ type TransferSyncAnchorCandidate = {
 };
 
 export class LevelHandler {
+    private static readonly GOBLIN_RIVER_INITIAL_PROGRESS = 11;
+    private static readonly TUTORIAL_DUNGEON_INITIAL_PROGRESS = 11;
     private static readonly GOBLIN_RIVER_BOSS_INTRO_TEXTS = new Set<string>([
         "You're the one that killed our Kraken!",
         'That was the last of our Monster Fleet!'
@@ -456,6 +458,9 @@ export class LevelHandler {
         if (!normalizedLevel) {
             return false;
         }
+        if (LevelHandler.shouldSkipDungeonRoomProgressSync(normalizedLevel)) {
+            return false;
+        }
 
         const startedRoomIds = LevelHandler.normalizeStartedRoomIds(normalizedLevel, syncStartedRoomIds);
         const roomId = Number.isFinite(Number(syncRoomId)) && Number(syncRoomId) >= 0
@@ -722,6 +727,35 @@ export class LevelHandler {
 
         client.character.questTrackerState = sharedState.progress;
         client.send(0xB7, LevelHandler.buildQuestProgressPayload(sharedState.progress));
+    }
+
+    static shouldSkipDungeonRoomProgressSync(levelName: string | null | undefined): boolean {
+        const normalizedLevel = LevelConfig.normalizeLevelName(levelName);
+        return normalizedLevel === 'GoblinRiverDungeon' ||
+            normalizedLevel === 'GoblinRiverDungeonHard' ||
+            normalizedLevel === 'TutorialDungeon';
+    }
+
+    static prepareGoblinRiverDungeonEntryState(client: Client): void {
+        if (!client.character || !LevelHandler.shouldSkipDungeonRoomProgressSync(client.currentLevel)) {
+            return;
+        }
+
+        if (client.currentLevel === 'TutorialDungeon') {
+            client.currentRoomId = 0;
+            client.startedRoomEvents.clear();
+            client.character.questTrackerState = LevelHandler.TUTORIAL_DUNGEON_INITIAL_PROGRESS;
+            return;
+        }
+
+        client.currentRoomId = 0;
+        client.startedRoomEvents.clear();
+        client.character.questTrackerState = LevelHandler.GOBLIN_RIVER_INITIAL_PROGRESS;
+    }
+
+    private static shouldClampTutorialDungeonToIntroProgress(client: Client): boolean {
+        return client.currentLevel === 'TutorialDungeon' &&
+            !LevelHandler.hasRoomEventStarted(client, LevelHandler.TUTORIAL_DUNGEON_DROP_ROOM_EVENT);
     }
 
     private static sendRoomBossInfo(
@@ -2532,6 +2566,10 @@ export class LevelHandler {
             progress = previousProgress;
         }
 
+        if (currentLevel === 'TutorialDungeon' && LevelHandler.shouldClampTutorialDungeonToIntroProgress(client)) {
+            progress = LevelHandler.TUTORIAL_DUNGEON_INITIAL_PROGRESS;
+        }
+
         const levelScope = getClientLevelScope(client);
         if (usesSharedDungeonProgress(currentLevel) && levelScope) {
             const sharedState = recomputeSharedDungeonProgress(levelScope);
@@ -2540,9 +2578,9 @@ export class LevelHandler {
                 if (liveAuthorityToken > 0) {
                     sharedState.authorityToken = liveAuthorityToken;
                 }
-                progress = hasSharedDungeonProgressHostiles(levelScope) ? sharedState.progress : 0;
+                progress = sharedState.progress;
             } else {
-                progress = 0;
+                progress = LevelHandler.GOBLIN_RIVER_INITIAL_PROGRESS;
             }
         }
 

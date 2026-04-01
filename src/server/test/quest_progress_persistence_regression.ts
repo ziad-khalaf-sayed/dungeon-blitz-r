@@ -94,9 +94,41 @@ async function testQuestProgressUpdateDoesNotRegressCompletedCraftTownTutorial()
     assert.equal(saveCalls, 0);
 }
 
+async function testTutorialDungeonQuestProgressStaysAtIntroBaselineUntilDropTutorial(): Promise<void> {
+    const client = createClient();
+    client.currentLevel = 'TutorialDungeon';
+    client.character.CurrentLevel = { name: 'TutorialDungeon', x: 0, y: 0 };
+    client.character.PreviousLevel = { name: 'NewbieRoad', x: 1421, y: 826 };
+    client.character.questTrackerState = 11;
+    (client as any).startedRoomEvents = new Set<string>([
+        'TutorialDungeon:0',
+        'TutorialDungeon:1',
+        'TutorialDungeon:4'
+    ]);
+
+    let saveCalls = 0;
+    const originalSaveCharacterSnapshot = JsonAdapter.prototype.saveCharacterSnapshot;
+    JsonAdapter.prototype.saveCharacterSnapshot = async function(userId: number, character: Character): Promise<Character[]> {
+        saveCalls += 1;
+        assert.equal(userId, 6);
+        assert.equal(character.questTrackerState, 11);
+        return [character];
+    };
+
+    try {
+        await LevelHandler.handleQuestProgressUpdate(client as never, createQuestProgressPacket(100));
+    } finally {
+        JsonAdapter.prototype.saveCharacterSnapshot = originalSaveCharacterSnapshot;
+    }
+
+    assert.equal(client.character.questTrackerState, 11);
+    assert.equal(saveCalls, 0);
+}
+
 async function main(): Promise<void> {
     await testQuestProgressUpdatePersistsCharacterSnapshot();
     await testQuestProgressUpdateDoesNotRegressCompletedCraftTownTutorial();
+    await testTutorialDungeonQuestProgressStaysAtIntroBaselineUntilDropTutorial();
     console.log('quest_progress_persistence_regression: ok');
 }
 

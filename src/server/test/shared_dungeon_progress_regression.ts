@@ -115,11 +115,11 @@ async function testGoblinRiverQuestProgressStaysIncompleteBeforeHostilesExist():
 
     await LevelHandler.handleQuestProgressUpdate(solo as never, createQuestProgressPacket(100));
 
-    assert.equal(solo.character.questTrackerState, 0, 'dungeon progress should stay incomplete before any shared hostile authority exists');
+    assert.equal(solo.character.questTrackerState, 11, 'dungeon progress should start at the Goblin River intro baseline before any shared hostile authority exists');
     assert.deepEqual(
         solo.sentPackets.filter((packet) => packet.id === 0xB7).map((packet) => parseQuestProgress(packet.payload)),
-        [0],
-        'the server should correct the client back to 0% until shared dungeon hostiles exist'
+        [11],
+        'the server should keep the client at the Goblin River intro baseline until shared dungeon hostiles exist'
     );
 
     await MissionHandler.handleSetLevelComplete(solo as never, createLevelCompletePacket());
@@ -174,11 +174,11 @@ async function testGoblinRiverQuestProgressFollowsHostileOwnerAuthority(): Promi
 
     await LevelHandler.handleQuestProgressUpdate(joiner as never, createQuestProgressPacket(100));
 
-    assert.equal(joiner.character.questTrackerState, 50, 'joiner progress should be recomputed from the server hostile state');
-    assert.equal(authority.character.questTrackerState, 50, 'leader progress should follow the same shared server-computed state');
+    assert.equal(joiner.character.questTrackerState, 56, 'joiner progress should be recomputed from the server hostile state on top of the Goblin River intro baseline');
+    assert.equal(authority.character.questTrackerState, 56, 'leader progress should follow the same shared server-computed baseline-adjusted state');
     assert.deepEqual(
         joiner.sentPackets.filter((packet) => packet.id === 0xB7).map((packet) => parseQuestProgress(packet.payload)),
-        [50],
+        [56],
         'joiner should be corrected to the shared server-computed progress'
     );
 }
@@ -217,7 +217,7 @@ async function testGoblinRiverLevelCompleteWaitsForSharedProgressCompletion(): P
     );
 
     await LevelHandler.handleQuestProgressUpdate(joiner as never, createQuestProgressPacket(100));
-    assert.equal(joiner.character.questTrackerState, 0, 'joiner false completion should still be ignored before the server sees the hostile die');
+    assert.equal(joiner.character.questTrackerState, 11, 'joiner false completion should still stay at the Goblin River intro baseline before the server sees the hostile die');
 
     const hostile = GlobalState.levelEntities.get('GoblinRiverDungeon#goblin-shared')?.get(5101);
     assert.ok(hostile, 'canonical hostile should exist');

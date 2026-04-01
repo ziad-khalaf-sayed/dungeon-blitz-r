@@ -1,6 +1,6 @@
 import { GlobalState, SharedDungeonProgressState } from './GlobalState';
 import { LevelConfig } from './LevelConfig';
-import { getClientLevelScope } from './LevelScope';
+import { getClientLevelScope, getScopeLevelName } from './LevelScope';
 import { getPartyLeaderCharacterKeyForClient } from './PartySync';
 import { normalizeCharacterKey } from './SocialState';
 import { EntityState } from './Entity';
@@ -9,6 +9,7 @@ const SHARED_DUNGEON_PROGRESS_LEVELS = new Set<string>([
     'GoblinRiverDungeon',
     'GoblinRiverDungeonHard'
 ]);
+const GOBLIN_RIVER_INITIAL_PROGRESS = 11;
 
 function normalizeAuthorityToken(value: unknown): number {
     const token = Number(value ?? 0);
@@ -247,6 +248,14 @@ export function recomputeSharedDungeonProgress(levelScope: string | null | undef
     }
 
     const totals = getSharedDungeonProgressTotals(levelScope);
+    const levelName = getScopeLevelName(levelScope);
+    if (usesSharedDungeonProgress(levelName)) {
+        state.progress = totals.total > 0
+            ? clampProgress(GOBLIN_RIVER_INITIAL_PROGRESS + ((totals.defeated / totals.total) * (100 - GOBLIN_RIVER_INITIAL_PROGRESS)))
+            : GOBLIN_RIVER_INITIAL_PROGRESS;
+        return state;
+    }
+
     state.progress = totals.total > 0
         ? clampProgress((totals.defeated / totals.total) * 100)
         : 0;

@@ -592,22 +592,22 @@ function testStorePendingTransferTokenCreatesSoloDungeonInstance(): void {
 
 function testRestoreTransferredRoomProgressReplaysRoomEvents(): void {
     const client = createClient();
-    client.currentLevel = 'TutorialDungeon';
+    client.currentLevel = 'BridgeTown';
 
     const restored = LevelHandler.restoreTransferredRoomProgress(client as never, {
-        targetLevel: 'TutorialDungeon',
+        targetLevel: 'BridgeTown',
         syncRoomId: 7,
         syncStartedRoomIds: [1, 7]
     });
 
     assert.equal(restored, true);
     assert.equal(client.currentRoomId, 7);
-    assert.equal(client.startedRoomEvents.has('TutorialDungeon:1'), true);
-    assert.equal(client.startedRoomEvents.has('TutorialDungeon:7'), true);
+    assert.equal(client.startedRoomEvents.has('BridgeTown:1'), true);
+    assert.equal(client.startedRoomEvents.has('BridgeTown:7'), true);
     assert.deepEqual(client.sentPackets.map((packet: { id: number }) => packet.id), [0xA5, 0xA5]);
 }
 
-function testPrimeTutorialRoomEventsSkipsSyncedProgress(): void {
+function testTutorialDungeonTransferredRoomProgressIsIgnored(): void {
     const client = createClient();
     client.currentLevel = 'TutorialDungeon';
 
@@ -617,11 +617,65 @@ function testPrimeTutorialRoomEventsSkipsSyncedProgress(): void {
         syncStartedRoomIds: [0, 5, 15]
     });
 
-    assert.equal(restored, true);
+    assert.equal(restored, false);
     LevelHandler.primeTutorialRoomEvents(client as never);
 
-    assert.equal(client.startedRoomEvents.has('TutorialDungeon:1'), false, 'synced tutorial progress should not re-prime room 1');
+    assert.equal(client.startedRoomEvents.has('TutorialDungeon:0'), true);
+    assert.equal(client.startedRoomEvents.has('TutorialDungeon:1'), true);
+    assert.equal(client.startedRoomEvents.has('TutorialDungeon:4'), true);
     assert.deepEqual(client.sentPackets.map((packet: { id: number }) => packet.id), [0xA5, 0xA5, 0xA5]);
+}
+
+function testGoblinRiverTransferredRoomProgressIsIgnored(): void {
+    const client = createClient();
+    client.currentLevel = 'GoblinRiverDungeon';
+
+    const restored = LevelHandler.restoreTransferredRoomProgress(client as never, {
+        targetLevel: 'GoblinRiverDungeon',
+        syncRoomId: 6,
+        syncStartedRoomIds: [0, 3, 6]
+    });
+
+    assert.equal(restored, false, 'Goblin River should ignore transferred room-progress replay so every player starts at the intro state');
+    assert.equal(client.currentRoomId, 0);
+    assert.equal(client.startedRoomEvents.size, 0);
+    assert.equal(client.sentPackets.length, 0);
+}
+
+function testPrepareGoblinRiverDungeonEntryStateResetsToIntroBaseline(): void {
+    const client = createClient();
+    client.currentLevel = 'GoblinRiverDungeon';
+    client.currentRoomId = 6;
+    client.startedRoomEvents.add('GoblinRiverDungeon:3');
+    client.startedRoomEvents.add('GoblinRiverDungeon:6');
+    client.character = {
+        ...createCharacter('GoblinRunner'),
+        questTrackerState: 100
+    };
+
+    LevelHandler.prepareGoblinRiverDungeonEntryState(client as never);
+
+    assert.equal(client.currentRoomId, 0);
+    assert.equal(client.startedRoomEvents.size, 0);
+    assert.equal(client.character.questTrackerState, 11);
+}
+
+function testPrepareTutorialDungeonEntryStateResetsToIntroBaseline(): void {
+    const client = createClient();
+    client.currentLevel = 'TutorialDungeon';
+    client.currentRoomId = 6;
+    client.startedRoomEvents.add('TutorialDungeon:3');
+    client.startedRoomEvents.add('TutorialDungeon:6');
+    client.character = {
+        ...createCharacter('TutorialRunner'),
+        questTrackerState: 100
+    };
+
+    LevelHandler.prepareGoblinRiverDungeonEntryState(client as never);
+
+    assert.equal(client.currentRoomId, 0);
+    assert.equal(client.startedRoomEvents.size, 0);
+    assert.equal(client.character.questTrackerState, 11);
 }
 
 function testPrimeTutorialRoomEventsSeedsTutorialDungeonIntroThought(): void {
@@ -1026,9 +1080,15 @@ async function main(): Promise<void> {
         GlobalState.pendingExtended.clear();
         GlobalState.tokenChar.clear();
 
+        testGoblinRiverTransferredRoomProgressIsIgnored();
+
+        testPrepareGoblinRiverDungeonEntryStateResetsToIntroBaseline();
+
+        testPrepareTutorialDungeonEntryStateResetsToIntroBaseline();
+
         testRestoreTransferredRoomProgressReplaysRoomEvents();
 
-        testPrimeTutorialRoomEventsSkipsSyncedProgress();
+        testTutorialDungeonTransferredRoomProgressIsIgnored();
 
         testPrimeTutorialRoomEventsSeedsTutorialDungeonIntroThought();
 

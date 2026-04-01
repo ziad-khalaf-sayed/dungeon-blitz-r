@@ -779,6 +779,7 @@ export class CharacterHandler {
             y: entry.newY ?? 0,
             hasCoord: entry.newHasCoord ?? false
         };
+        LevelHandler.prepareGoblinRiverDungeonEntryState(client);
 
         // Send Player Data (0x10)
         const pdPkt = WorldEnter.buildPlayerDataPacket(
