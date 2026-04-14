@@ -36,16 +36,43 @@ interface LootReward {
     gear?: number;
     tier?: number;
     material?: number;
+    dye?: number;
 }
 
 export class RewardHandler {
     private static nextLootId = 900000;
     private static readonly MATERIAL_DROP_CHANCE_BY_RANK: Record<string, number> = {
-        Minion: 0.2,
-        Lieutenant: 0.6,
-        MiniBoss: 0.8,
-        Boss: 1
+        Minion: 0.04,
+        Lieutenant: 0.08,
+        MiniBoss: 0.15,
+        Boss: 0.25
     };
+    private static readonly DYE_DROP_CHANCE = 0.01;
+    private static readonly MATERIAL_RARITY_WEIGHTS_NORMAL: Array<{ rarity: 'M' | 'R' | 'L'; weight: number }> = [
+        { rarity: 'M', weight: 0.85 },
+        { rarity: 'R', weight: 0.13 },
+        { rarity: 'L', weight: 0.02 }
+    ];
+    private static readonly MATERIAL_RARITY_WEIGHTS_HARD: Array<{ rarity: 'M' | 'R' | 'L'; weight: number }> = [
+        { rarity: 'M', weight: 0.72 },
+        { rarity: 'R', weight: 0.22 },
+        { rarity: 'L', weight: 0.06 }
+    ];
+    private static readonly GEAR_RARITY_WEIGHTS_RANDOM: Array<{ tier: 0 | 1 | 2; weight: number }> = [
+        { tier: 0, weight: 0.86 },
+        { tier: 1, weight: 0.12 },
+        { tier: 2, weight: 0.02 }
+    ];
+    private static readonly GEAR_RARITY_WEIGHTS_FIXED: Array<{ tier: 0 | 1 | 2; weight: number }> = [
+        { tier: 0, weight: 0.65 },
+        { tier: 1, weight: 0.25 },
+        { tier: 2, weight: 0.10 }
+    ];
+    private static readonly GEAR_RARITY_WEIGHTS_HARD: Array<{ tier: 0 | 1 | 2; weight: number }> = [
+        { tier: 0, weight: 0.60 },
+        { tier: 1, weight: 0.28 },
+        { tier: 2, weight: 0.12 }
+    ];
     private static readonly DUNGEON_REALM_MAP: Record<string, string> = {
         GoblinRiverDungeon: 'Goblin',
         GoblinRiverDungeonHard: 'Goblin',
@@ -110,7 +137,7 @@ export class RewardHandler {
         bb.writeMethod15(false);
 
         bb.writeMethod15(false);
-        bb.writeMethod4(1);
+        bb.writeMethod4(reward.dye ?? 0);
         return bb.toBuffer();
     }
 
@@ -139,6 +166,13 @@ export class RewardHandler {
         bb.writeMethod4(materialId);
         bb.writeMethod4(amount);
         client.sendBitBuffer(0x34, bb);
+    }
+
+    private static sendDyeReward(client: Client, dyeId: number, suppress: boolean): void {
+        const bb = new BitBuffer(false);
+        bb.writeMethod6(dyeId, 8);
+        bb.writeMethod15(suppress);
+        client.sendBitBuffer(0x10A, bb);
     }
 
     private static sendEntityHeal(client: Client, entityId: number, amount: number): void {
@@ -173,22 +207,40 @@ export class RewardHandler {
         };
     }
 
-    private static resolveGearTier(entName: string, entLevel: number): number {
+    private static pickWeighted<T extends string | number>(
+        weights: Array<{ value: T; weight: number }>
+    ): T {
+        let roll = Math.random();
+        for (const entry of weights) {
+            roll -= entry.weight;
+            if (roll < 0) {
+                return entry.value;
+            }
+        }
+        return weights[weights.length - 1]!.value;
+    }
+
+    private static resolveGearTier(client: Client, entName: string): number {
         const entType = GameData.getEntType(entName) || {};
-        let dropChance = 0.01;
-        const rawChance = Number(entType.ItemDropChance ?? 0);
-        if (rawChance > 0) {
-            dropChance = Math.min(rawChance, 1) * 0.1;
+        const rewardClass = String(entType.RewardClass ?? '').trim();
+        if (RewardHandler.isHardDungeon(client.currentLevel)) {
+            return RewardHandler.pickWeighted<number>(RewardHandler.GEAR_RARITY_WEIGHTS_HARD.map((entry) => ({
+                value: entry.tier,
+                weight: entry.weight
+            })));
         }
 
-        const roll = Math.random();
-        if (entLevel >= 15 && roll < dropChance * 0.1) {
-            return 2;
+        if (rewardClass === 'FixedItem' || rewardClass === 'SuperItem') {
+            return RewardHandler.pickWeighted<number>(RewardHandler.GEAR_RARITY_WEIGHTS_FIXED.map((entry) => ({
+                value: entry.tier,
+                weight: entry.weight
+            })));
         }
-        if (roll < dropChance * 0.3) {
-            return 1;
-        }
-        return 0;
+
+        return RewardHandler.pickWeighted<number>(RewardHandler.GEAR_RARITY_WEIGHTS_RANDOM.map((entry) => ({
+            value: entry.tier,
+            weight: entry.weight
+        })));
     }
 
     private static sanitizeDropMultiplier(value: number | undefined): number {
@@ -200,6 +252,65 @@ export class RewardHandler {
         const baseChance = RewardHandler.MATERIAL_DROP_CHANCE_BY_RANK[rank] ?? RewardHandler.MATERIAL_DROP_CHANCE_BY_RANK.Minion;
         const multiplier = RewardHandler.sanitizeDropMultiplier(reward.gearMultiplier);
         return Math.max(0, Math.min(1, baseChance * multiplier));
+    }
+
+    private static resolveGearDropChance(entType: any, reward: RewardRequest): number {
+        const rawChance = Number(entType?.ItemDropChance ?? 0);
+        if (rawChance <= 0) {
+            return 0;
+        }
+
+        const multiplier = reward.dropItem ? RewardHandler.sanitizeDropMultiplier(reward.itemMultiplier) : 1;
+        return Math.max(0, Math.min(1, rawChance * multiplier));
+    }
+
+    private static resolveMaterialDropRarity(client: Client): 'M' | 'R' | 'L' {
+        const table = RewardHandler.isHardDungeon(client.currentLevel)
+            ? RewardHandler.MATERIAL_RARITY_WEIGHTS_HARD
+            : RewardHandler.MATERIAL_RARITY_WEIGHTS_NORMAL;
+        return RewardHandler.pickWeighted<'M' | 'R' | 'L'>(table.map((entry) => ({
+            value: entry.rarity,
+            weight: entry.weight
+        })));
+    }
+
+    private static rewardClassAllowsItemLoot(entType: any): boolean {
+        const rewardClass = String(entType?.RewardClass ?? '').trim();
+        return Boolean(rewardClass)
+            && rewardClass !== 'ExpAndGold'
+            && rewardClass !== 'NoLoot'
+            && rewardClass !== 'HealthOnly';
+    }
+
+    private static isHardDungeon(levelName: string | null | undefined): boolean {
+        return /Hard$/i.test(String(levelName ?? '').trim());
+    }
+
+    private static resolveDyeDropRarity(client: Client, entType: any): string | null {
+        const rank = String(entType?.EntRank ?? 'Minion');
+        if (rank !== 'Lieutenant' && rank !== 'MiniBoss' && rank !== 'Boss') {
+            return null;
+        }
+
+        if (Math.random() >= RewardHandler.DYE_DROP_CHANCE) {
+            return null;
+        }
+
+        const rarityRoll = Math.random();
+        if (RewardHandler.isHardDungeon(client.currentLevel)) {
+            if (rarityRoll < 0.72) {
+                return 'M';
+            }
+            if (rarityRoll < 0.92) {
+                return 'R';
+            }
+            return 'L';
+        }
+
+        if (rarityRoll < 0.95) {
+            return 'M';
+        }
+        return 'R';
     }
 
     private static spawnLoot(client: Client, x: number, y: number, reward: LootReward, offsetX: number = 0, offsetY: number = 0): void {
@@ -219,6 +330,33 @@ export class RewardHandler {
         return true;
     }
 
+    private static collectOwnedGearIds(client: Client): Set<number> {
+        const owned = new Set<number>();
+
+        for (const rawGear of Array.isArray(client.character?.inventoryGears) ? client.character.inventoryGears : []) {
+            const gearId = Number(rawGear?.gearID ?? 0);
+            if (gearId > 0) {
+                owned.add(gearId);
+            }
+        }
+
+        for (const rawGear of Array.isArray(client.character?.equippedGears) ? client.character.equippedGears : []) {
+            const gearId = Number(rawGear?.gearID ?? 0);
+            if (gearId > 0) {
+                owned.add(gearId);
+            }
+        }
+
+        for (const reward of client.pendingLoot.values()) {
+            const gearId = Number(reward?.gear ?? 0);
+            if (gearId > 0) {
+                owned.add(gearId);
+            }
+        }
+
+        return owned;
+    }
+
     private static maybeOverrideDungeonReward(client: Client, sourceEntity: any, reward: RewardRequest): {
         exp: number;
         gold: number;
@@ -226,6 +364,7 @@ export class RewardHandler {
         materialId: number;
         gearId: number;
         gearTier: number;
+        dyeId: number;
     } {
         let exp = reward.exp;
         let gold = reward.gold;
@@ -233,19 +372,28 @@ export class RewardHandler {
         let materialId = 0;
         let gearId = 0;
         let gearTier = 0;
+        let dyeId = 0;
 
         const entName = String(sourceEntity?.name ?? '');
 
         // Target Dummy (Hedefkuklası) - No rewards
         if (entName.startsWith('IntroDummy') || entName === 'EmperorDummy' || entName === 'EmperorDummyHard' || entName.startsWith('HomeDummy')) {
-            return { exp: 0, gold: 0, hpGain: 0, materialId: 0, gearId: 0, gearTier: 0 };
+            return { exp: 0, gold: 0, hpGain: 0, materialId: 0, gearId: 0, gearTier: 0, dyeId: 0 };
         }
 
         const entType = entName ? GameData.getEntType(entName) : null;
         const entLevel = Math.max(1, Number(entType?.Level ?? 1));
         const playerClass = String(client.character?.class ?? '');
+        const ownedGearIds = RewardHandler.collectOwnedGearIds(client);
         const realm = String(entType?.Realm ?? RewardHandler.DUNGEON_REALM_MAP[client.currentLevel] ?? '');
-        const materialChance = realm ? RewardHandler.resolveMaterialDropChance(entType, reward) : 0;
+        const itemLootAllowedByClass = RewardHandler.rewardClassAllowsItemLoot(entType);
+        const materialChance = realm && reward.dropMaterial && itemLootAllowedByClass
+            ? RewardHandler.resolveMaterialDropChance(entType, reward)
+            : 0;
+        const gearChance = reward.dropGear && itemLootAllowedByClass
+            ? RewardHandler.resolveGearDropChance(entType, reward)
+            : 0;
+        const dyeRarity = RewardHandler.resolveDyeDropRarity(client, entType);
 
         // Küçük Intro düşmanlar (Minion rank) ve Chains entitylerinden eşya düşmez
         const isIntroEnemy = entName.startsWith('Intro');
@@ -255,16 +403,19 @@ export class RewardHandler {
         const allowItemDrop = !isChainsEnemy && (!isIntroEnemy || isLargeEnemy);
 
         if (realm && materialChance > 0 && Math.random() < materialChance) {
-            materialId = GameData.getRandomMaterialForRealm(realm);
+            materialId = GameData.getRandomMaterialForRealm(realm, [RewardHandler.resolveMaterialDropRarity(client)]);
         }
-        if (reward.dropGear && allowItemDrop) {
-            gearId = GameData.getGearIdForEntity(entName, playerClass);
-            gearTier = RewardHandler.resolveGearTier(entName, entLevel);
+        if (allowItemDrop && dyeRarity) {
+            dyeId = GameData.getRandomDyeId([dyeRarity]);
+        }
+        if (allowItemDrop && gearChance > 0 && Math.random() < gearChance) {
+            gearId = GameData.getGearIdForEntity(entName, playerClass, ownedGearIds);
+            gearTier = RewardHandler.resolveGearTier(client, entName);
         }
 
         const needsFallback = gold <= 0 && !reward.dropGear && !reward.dropMaterial;
         if (!needsFallback) {
-            return { exp, gold, hpGain, materialId, gearId, gearTier };
+            return { exp, gold, hpGain, materialId, gearId, gearTier, dyeId };
         }
 
         if (exp <= 1 && entName) {
@@ -283,17 +434,12 @@ export class RewardHandler {
             }
         }
 
-        if (!gearId && entName && allowItemDrop && Math.random() < 0.10) {
-            gearId = GameData.getGearIdForEntity(entName, playerClass);
-            gearTier = RewardHandler.resolveGearTier(entName, entLevel);
-        }
-
         if (hpGain <= 0 && Math.random() < 0.20) {
             const maxHp = Math.max(100, Number(client.authoritativeMaxHp ?? 100));
             hpGain = Math.max(1, Math.floor(maxHp * 0.15));
         }
 
-        const result = { exp, gold, hpGain, materialId, gearId, gearTier };
+        const result = { exp, gold, hpGain, materialId, gearId, gearTier, dyeId };
         if (entName === 'IntroParrot' || entName.startsWith('Chains')) {
             result.exp = 0;
         }
@@ -431,6 +577,16 @@ export class RewardHandler {
                 Math.floor(Math.random() * 21) - 10
             );
         }
+        if (resolved.dyeId > 0) {
+            RewardHandler.spawnLoot(
+                client,
+                dropPosition.x,
+                dropPosition.y,
+                { dye: resolved.dyeId },
+                Math.floor(Math.random() * 41) - 20,
+                Math.floor(Math.random() * 21) - 10
+            );
+        }
 
         if (shouldSave) {
             await RewardHandler.persistCharacter(client);
@@ -526,6 +682,19 @@ export class RewardHandler {
                 Math.max(1, Number(client.authoritativeMaxHp ?? 100))
             );
             RewardHandler.sendEntityHeal(client, client.clientEntID, reward.health);
+        }
+
+        if (reward.dye && reward.dye > 0) {
+            const ownedDyes = new Set<number>(
+                (Array.isArray(client.character.OwnedDyes) ? client.character.OwnedDyes : [])
+                    .map((dye: unknown) => Number(dye))
+                    .filter((dyeId: number) => dyeId > 0)
+            );
+            const existingCount = ownedDyes.size;
+            ownedDyes.add(reward.dye);
+            client.character.OwnedDyes = Array.from(ownedDyes.values()).sort((left, right) => left - right);
+            RewardHandler.sendDyeReward(client, reward.dye, false);
+            shouldSave = shouldSave || ownedDyes.size !== existingCount;
         }
 
         if (shouldSave) {
