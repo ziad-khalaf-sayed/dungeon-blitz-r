@@ -598,6 +598,24 @@ export function disassemble(code: Buffer, ctx: string): Instruction[] {
     const offset = pos;
     const opcode = code[pos];
     pos += 1;
+    if (opcode === 0x1b) {
+      const operands: Array<[OperandKind, number]> = [];
+      let defaultOffset: number;
+      [defaultOffset, pos] = readS24(code, pos, `${ctx}@${offset}.default`);
+      operands.push(["s24", defaultOffset]);
+
+      let caseCount: number;
+      [caseCount, pos] = readU30(code, pos, `${ctx}@${offset}.case_count`);
+      operands.push(["u30", caseCount]);
+      for (let caseIndex = 0; caseIndex <= caseCount; caseIndex += 1) {
+        let caseOffset: number;
+        [caseOffset, pos] = readS24(code, pos, `${ctx}@${offset}.case[${caseIndex}]`);
+        operands.push(["s24", caseOffset]);
+      }
+
+      instructions.push({ offset, opcode, operands, size: pos - offset });
+      continue;
+    }
     const signature = OPCODE_INFO.get(opcode);
     if (signature === undefined) {
       throw new PatchError(`Unsupported opcode 0x${opcode.toString(16)} in ${ctx} at ${offset}`);

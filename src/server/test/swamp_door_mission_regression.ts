@@ -281,6 +281,20 @@ function testUnclearedArachnaeStillUsesFelbridgeDungeonEntrance(): void {
     );
 }
 
+function testArachnaeTurnInMissionRemainsVisibleInFelbridge(): void {
+    const normalMission = MissionLoader.getMissionDef(MissionID.ClearTheBridge);
+    const hardMission = MissionLoader.getMissionDef(MissionID.ClearTheBridgeHard);
+
+    assert.ok(
+        String(normalMission?.ZoneSet ?? '').split(',').map((zone) => zone.trim()).includes('BridgeTown'),
+        'Arachnae should stay serialized in Felbridge so the tracker points to BT_Greeter after the dungeon'
+    );
+    assert.ok(
+        String(hardMission?.ZoneSet ?? '').split(',').map((zone) => zone.trim()).includes('BridgeTownHard'),
+        'Dread Arachnae should stay serialized in Dread Felbridge so the tracker points to BT_GreeterHard'
+    );
+}
+
 async function main(): Promise<void> {
     ensureDataLoaded();
     testSwampRoadNorthOnlyShowsAcceptedDungeonDoors();
@@ -289,6 +303,7 @@ async function main(): Promise<void> {
     testLockedMindlessQueenDoorReportsLockedAndDoesNotTransfer();
     testClearedArachnaeOpensFelbridgeRoadToBlackRoseMireConnector();
     testUnclearedArachnaeStillUsesFelbridgeDungeonEntrance();
+    testArachnaeTurnInMissionRemainsVisibleInFelbridge();
     console.log('swamp_door_mission_regression: ok');
 }
 

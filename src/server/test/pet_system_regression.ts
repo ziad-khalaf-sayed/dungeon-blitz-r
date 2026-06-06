@@ -302,10 +302,13 @@ function assertNear(actual: number, expected: number, message: string): void {
 
 async function captureRewardRollDebug(fn: () => Promise<void>): Promise<any[]> {
     const originalLog = console.log;
+    const originalRewardRollDebug = process.env.REWARD_ROLL_DEBUG;
     const debugLogs: any[] = [];
+    process.env.REWARD_ROLL_DEBUG = 'true';
     console.log = (...args: any[]) => {
         if (args[0] === '[RewardRollDebug]') {
             debugLogs.push(args[1]);
+            return;
         }
         originalLog(...args);
     };
@@ -314,6 +317,11 @@ async function captureRewardRollDebug(fn: () => Promise<void>): Promise<any[]> {
         await fn();
     } finally {
         console.log = originalLog;
+        if (originalRewardRollDebug === undefined) {
+            delete process.env.REWARD_ROLL_DEBUG;
+        } else {
+            process.env.REWARD_ROLL_DEBUG = originalRewardRollDebug;
+        }
     }
 
     return debugLogs;

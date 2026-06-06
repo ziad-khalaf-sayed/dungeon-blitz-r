@@ -25,7 +25,26 @@ export class DialogueTranslationLoader {
     private static readonly translationsByLocale: Map<string, Map<string, string>> = new Map();
     private static readonly translatedValuesByLocale: Map<string, Set<string>> = new Map();
     private static readonly translationTemplatesByLocale: Map<string, DialogueTranslationTemplate[]> = new Map();
+    private static readonly playerRoomThoughtTexts: Set<string> = new Set();
     private static loaded = false;
+    private static readonly KNOWN_PLAYER_ROOM_THOUGHT_TEXTS = new Set([
+        'Get back across the sea!',
+        'Maybe death will take me home...',
+        'Hsalt is dead, you poor wretch.',
+        "I wonder how long Hsalt's horrors will linger.",
+        'Rest in peace, poor people',
+        'Hsalt did you grave wrong.',
+        'Was he trying to warn me?',
+        'What is Felbridge?',
+        'And you\'re the Vizier. You look thinner in your banners.',
+        'I think it\'s time I finally met The Vizier.',
+        'Perhaps it\'s the work of the Vizier those guards mentioned.',
+        "This must've been Lord Yornak's gardens.",
+        'Made you a monster.',
+        'Once I clear the monsters from around Castle Hocke.',
+        "The road's clear, now soldiers from Wolf's End can join me...",
+        'Was that a man or a plant?'
+    ]);
     private static readonly HELP_FALLBACKS = [
         'Yardim edin!',
         'Beni koruyun!',
@@ -94,6 +113,24 @@ export class DialogueTranslationLoader {
         );
     }
 
+    private static addPlayerRoomThoughtSegments(value: string): void {
+        const text = String(value ?? '');
+        if (!text.includes('@')) {
+            return;
+        }
+
+        for (const segment of text.split(/[=:]/)) {
+            if (!segment.trimStart().startsWith('@')) {
+                continue;
+            }
+
+            const normalized = this.stripClientDirectives(segment);
+            if (normalized) {
+                this.playerRoomThoughtTexts.add(normalized);
+            }
+        }
+    }
+
     private static isFemaleGender(gender?: string): boolean {
         return String(gender ?? '').trim().toLowerCase() === 'female';
     }
@@ -135,6 +172,12 @@ export class DialogueTranslationLoader {
         const female = this.isFemaleGender(playerGender);
         const choose = (maleText: string, femaleText: string): string => female ? femaleText : maleText;
         let localized = String(text ?? '')
+            .replace(/\bo humano\|a humana\b/g, choose('o humano', 'a humana'))
+            .replace(/\bO humano\|A humana\b/g, choose('O humano', 'A humana'))
+            .replace(/\bum humano\|uma humana\b/g, choose('um humano', 'uma humana'))
+            .replace(/\bUm humano\|Uma humana\b/g, choose('Um humano', 'Uma humana'))
+            .replace(/\bum homem\|uma mulher\b/g, choose('um homem', 'uma mulher'))
+            .replace(/\bUm homem\|Uma mulher\b/g, choose('Um homem', 'Uma mulher'))
             .replace(/\bEle\|Ela\b/g, choose('Ele', 'Ela'))
             .replace(/\bele\|ela\b/g, choose('ele', 'ela'))
             .replace(/\bEle\|ela\b/g, choose('Ele', 'Ela'))
@@ -153,8 +196,14 @@ export class DialogueTranslationLoader {
             .replace(/\bCara\|Dama\b/g, choose('Cara', 'Dama'))
             .replace(/\bIrmao\.\|Irma\./g, choose('Irmão.', 'Irmã.'))
             .replace(/\bIrmão\.\|Irmã\./g, choose('Irmão.', 'Irmã.'))
+            .replace(/\birmão\.\|irmã\./g, choose('irmão.', 'irmã.'))
             .replace(/\bIrmao\|Irma\b/g, choose('Irmão', 'Irmã'))
             .replace(/\bIrmão\|Irmã\b/g, choose('Irmão', 'Irmã'))
+            .replace(/\birmão\|irmã\b/g, choose('irmão', 'irmã'))
+            .replace(/\bnovo\|nova\b/g, choose('novo', 'nova'))
+            .replace(/\bNovo\|Nova\b/g, choose('Novo', 'Nova'))
+            .replace(/\bhomem\|mulher\b/g, choose('homem', 'mulher'))
+            .replace(/\bHomem\|Mulher\b/g, choose('Homem', 'Mulher'))
             .replace(/\bum\|uma\b/g, choose('um', 'uma'))
             .replace(/\bUm\|Uma\b/g, choose('Um', 'Uma'))
             .replace(/\bo\|a\b/g, choose('o', 'a'))
@@ -165,8 +214,16 @@ export class DialogueTranslationLoader {
             .replace(/\bForasteiro\|Forasteira\b/g, choose('Forasteiro', 'Forasteira'))
             .replace(/\bcaçador\|caçadora\b/g, choose('caçador', 'caçadora'))
             .replace(/\bCaçador\|Caçadora\b/g, choose('Caçador', 'Caçadora'))
+            .replace(/\bverdadeiro\|verdadeira\b/g, choose('verdadeiro', 'verdadeira'))
+            .replace(/\bVerdadeiro\|Verdadeira\b/g, choose('Verdadeiro', 'Verdadeira'))
             .replace(/\bdurão\|durona\b/g, choose('durão', 'durona'))
             .replace(/\bDurão\|Durona\b/g, choose('Durão', 'Durona'))
+            .replace(/\bespião\|espiã\b/g, choose('espião', 'espiã'))
+            .replace(/\bEspião\|Espiã\b/g, choose('Espião', 'Espiã'))
+            .replace(/\bsabotador\|sabotadora\b/g, choose('sabotador', 'sabotadora'))
+            .replace(/\bSabotador\|Sabotadora\b/g, choose('Sabotador', 'Sabotadora'))
+            .replace(/\bassassino\|assassina\b/g, choose('assassino', 'assassina'))
+            .replace(/\bAssassino\|Assassina\b/g, choose('Assassino', 'Assassina'))
             .replace(/\bhumano\|humana\b/g, choose('humano', 'humana'))
             .replace(/\bHumano\|Humana\b/g, choose('Humano', 'Humana'))
             .replace(/\bobrigado\|obrigada\b/g, choose('obrigado', 'obrigada'))
@@ -201,6 +258,8 @@ export class DialogueTranslationLoader {
             .replace(/\bhumano\b/g, 'humana')
             .replace(/\bHumano\b/g, 'Humana')
             .replace(/\bnenhum hero[ií](?!na)\b/g, 'nenhuma heroína')
+            .replace(/\bum verdadeiro hero[ií]na\b/g, 'uma verdadeira heroína')
+            .replace(/\bUm verdadeiro Hero[ií]na\b/g, 'Uma verdadeira Heroína')
             .replace(/\bum hero[ií](?!na)\b/g, 'uma heroína')
             .replace(/\bhero[ií](?!na)\b/g, 'heroína')
             .replace(/\bHero[ií](?!na)\b/g, 'Heroína')
@@ -239,8 +298,20 @@ export class DialogueTranslationLoader {
             .replace(/\bUm lutador\b/g, 'Uma lutadora')
             .replace(/\blutador\b/g, 'lutadora')
             .replace(/\bLutador\b/g, 'Lutadora')
+            .replace(/\bespião\b/g, 'espiã')
+            .replace(/\bEspião\b/g, 'Espiã')
+            .replace(/\bsabotador\b/g, 'sabotadora')
+            .replace(/\bSabotador\b/g, 'Sabotadora')
+            .replace(/\bassassino\b/g, 'assassina')
+            .replace(/\bAssassino\b/g, 'Assassina')
             .replace(/\bObrigado\b/g, 'Obrigada')
-            .replace(/\bobrigado\b/g, 'obrigada');
+            .replace(/\bobrigado\b/g, 'obrigada')
+            .replace(/\bum homem\b/g, 'uma mulher')
+            .replace(/\bUm homem\b/g, 'Uma mulher')
+            .replace(/\bhomem\b/g, 'mulher')
+            .replace(/\bHomem\b/g, 'Mulher')
+            .replace(/\bHm, obrigada, vou pensar melhor nisso\./g, 'Hm, obrigado, vou pensar melhor nisso.')
+            .replace(/\bAquilo era uma mulher ou uma planta\?/g, 'Aquilo era um homem ou uma planta?');
 
         return localized;
     }
@@ -454,6 +525,10 @@ export class DialogueTranslationLoader {
         this.translationsByLocale.clear();
         this.translatedValuesByLocale.clear();
         this.translationTemplatesByLocale.clear();
+        this.playerRoomThoughtTexts.clear();
+        for (const text of this.KNOWN_PLAYER_ROOM_THOUGHT_TEXTS) {
+            this.playerRoomThoughtTexts.add(this.normalizeKey(text));
+        }
         this.loaded = false;
 
         try {
@@ -480,6 +555,12 @@ export class DialogueTranslationLoader {
                     translations.set(key, value);
                     translatedValues.add(this.normalizeKey(value));
                     translatedValues.add(this.stripClientDirectives(value));
+                    this.addPlayerRoomThoughtSegments(key);
+                    this.addPlayerRoomThoughtSegments(value);
+                    if (this.KNOWN_PLAYER_ROOM_THOUGHT_TEXTS.has(key)) {
+                        this.playerRoomThoughtTexts.add(key);
+                        this.playerRoomThoughtTexts.add(this.stripClientDirectives(value));
+                    }
                     this.addTranslationTemplate(templates, key, value);
                 }
 
@@ -497,6 +578,41 @@ export class DialogueTranslationLoader {
 
     static isLoaded(): boolean {
         return this.loaded;
+    }
+
+    static isPlayerRoomThoughtText(text: string): boolean {
+        const key = this.stripClientDirectives(text);
+        return Boolean(key && this.playerRoomThoughtTexts.has(key));
+    }
+
+    /**
+     * Direct dictionary-only lookup with no fallbacks.
+     * Returns the translated string if an exact entry exists, or null otherwise.
+     * Safe to call on entity class names — will not trigger localizeUnknownPortugueseText.
+     */
+    static lookupExactTranslation(text: string, locale: string): string | null {
+        const normalizedLocale = this.normalizeLocale(locale);
+        const translations = this.translationsByLocale.get(normalizedLocale);
+        if (!translations) return null;
+        const key = this.normalizeKey(text);
+        return translations.get(key) ?? translations.get(this.stripClientDirectives(key)) ?? null;
+    }
+
+    static localizeResolvedText(text: string, locale: string, options: DialogueTranslationOptions = {}): string {
+        const normalizedLocale = this.normalizeLocale(locale);
+        return normalizeDialogueTextForClient(
+            this.localizePortugueseGenderedText(
+                normalizedLocale,
+                this.localizePortugueseClassPlaceholder(
+                    normalizedLocale,
+                    text,
+                    options.playerClass,
+                    options.playerGender
+                ),
+                options.playerGender
+            ),
+            normalizedLocale
+        );
     }
 
     static translateText(text: string, locale: string, options: DialogueTranslationOptions = {}): string {

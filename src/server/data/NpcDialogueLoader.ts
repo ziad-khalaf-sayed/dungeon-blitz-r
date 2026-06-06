@@ -189,7 +189,19 @@ export class NpcDialogueLoader {
             .replace(/\bherói\|heroína\b/g, choose('herói', 'heroína'))
             .replace(/\bHerói\|Heroína\b/g, choose('Herói', 'Heroína'))
             .replace(/\bheroi\|heroina\b/g, choose('herói', 'heroína'))
-            .replace(/\bHeroi\|Heroina\b/g, choose('Herói', 'Heroína'));
+            .replace(/\bHeroi\|Heroina\b/g, choose('Herói', 'Heroína'))
+            .replace(/\bum\|uma\b/g, choose('um', 'uma'))
+            .replace(/\bUm\|Uma\b/g, choose('Um', 'Uma'))
+            .replace(/\bo\|a\b/g, choose('o', 'a'))
+            .replace(/\bO\|A\b/g, choose('O', 'A'))
+            .replace(/\bdo\|da\b/g, choose('do', 'da'))
+            .replace(/\bDo\|Da\b/g, choose('Do', 'Da'))
+            .replace(/\bverdadeiro\|verdadeira\b/g, choose('verdadeiro', 'verdadeira'))
+            .replace(/\bVerdadeiro\|Verdadeira\b/g, choose('Verdadeiro', 'Verdadeira'))
+            .replace(/\bhumano\|humana\b/g, choose('humano', 'humana'))
+            .replace(/\bHumano\|Humana\b/g, choose('Humano', 'Humana'))
+            .replace(/\bobrigado\|obrigada\b/g, choose('obrigado', 'obrigada'))
+            .replace(/\bObrigado\|Obrigada\b/g, choose('Obrigado', 'Obrigada'));
 
         if (!female) {
             return localized;
@@ -205,6 +217,7 @@ export class NpcDialogueLoader {
             .replace(/\bHumano\b/g, 'Humana')
             .replace(/\bnenhum herói(?!na)\b/g, 'nenhuma heroína')
             .replace(/\bum herói(?!na)\b/g, 'uma heroína')
+            .replace(/\bum verdadeiro heroína\b/g, 'uma verdadeira heroína')
             .replace(/\bherói(?!na)\b/g, 'heroína')
             .replace(/\bHerói(?!na)\b/g, 'Heroína')
             .replace(/\bcampeão\b/g, 'campeã')

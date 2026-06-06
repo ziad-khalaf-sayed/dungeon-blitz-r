@@ -45,12 +45,37 @@ function decodeSwz(filePath: string): SwzEntry[] {
 function testBrazilianPortugueseGameSwzExistsAndContainsLocalizedText(): void {
     const root = path.resolve(__dirname, '../../..');
     const swzPath = path.join(root, 'src/client/content/localhost/p/cbq/Game.pt-br.swz');
+    const englishSwzPath = path.join(root, 'src/client/content/localhost/p/cbq/Game.en.swz');
     assert.equal(fs.existsSync(swzPath), true, 'Game.pt-br.swz should exist');
 
     const entries = new Map(decodeSwz(swzPath).map((entry) => [entry.rootName, entry.xml]));
+    const englishEntries = new Map(decodeSwz(englishSwzPath).map((entry) => [entry.rootName, entry.xml]));
     assert.equal(entries.get('BuildingTypes')?.includes('Forja Mágica'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Magia Forja'), false);
     assert.equal(entries.get('BuildingTypes')?.includes('Magic Forge'), false);
-    assert.equal(entries.get('PetTypes')?.includes('nivel do mascote'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Covil do Ladrão de Almas Nível 3'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Soulthief Covil'), false);
+    assert.equal(entries.get('BuildingTypes')?.includes('Covil do Soulthief'), false);
+    assert.equal(entries.get('BuildingTypes')?.includes('Armadilha de Almas Elísia Nível 3'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Elysian Soultrap'), false);
+    assert.equal(entries.get('BuildingTypes')?.includes('Aumenta o nível máximo do pet em 2'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Totem do Éter Distorcido Nível 1'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Twisted Nethertotem'), false);
+    assert.equal(entries.get('BuildingTypes')?.includes('Libera 5 pontos de talento para treino'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Libera o treino de habilidades Ranque 4'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Libera o treino de todas as habilidades de Rank'), false);
+    assert.equal(entries.get('BuildingTypes')?.includes('Libera receitas de gemas de Ranque 2'), true);
+    assert.equal(entries.get('BuildingTypes')?.includes('Libera receitas de encanto de Rank'), false);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Mount</Type>'), true);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Pet</Type>'), true);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Consumable</Type>'), true);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>RespecStone</Type>'), true);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>CharmRemover</Type>'), true);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Montaria</Type>'), false);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Poção</Type>'), false);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Gema</Type>'), false);
+    assert.equal(entries.get('RoyalStoreTypes')?.includes('<Type>Bônus da Forja</Type>'), false);
+    assert.equal(entries.get('PetTypes')?.includes('nível do mascote'), true);
     assert.equal(entries.get('PlayerPowerTypes')?.includes('Invocar Mascote'), true);
     assert.equal(entries.get('MissionTypes')?.includes('Levado pela Maré'), true);
     assert.equal(entries.get('MissionTypes')?.includes('Capitão Fink'), true);
@@ -69,6 +94,11 @@ function testBrazilianPortugueseGameSwzExistsAndContainsLocalizedText(): void {
     assert.equal(entries.get('TooltipTypes')?.includes('Atalho do chat:'), true);
     assert.equal(entries.get('TooltipTypes')?.includes('Pressione [Enter] para começar'), true);
     assert.equal(entries.get('TooltipTypes')?.includes('Pressione [Enter] para enviar'), true);
+    assert.equal(
+        entries.get('MaterialTypes'),
+        englishEntries.get('MaterialTypes'),
+        'PT-BR Game.swz should keep MaterialTypes canonical until material localization has a dedicated audit'
+    );
 }
 
 function testBrazilianPortugueseDialogueFilesExist(): void {
@@ -154,9 +184,9 @@ function testBrazilianPortugueseDungeonDialogueDoesNotKeepCommonEnglishWords(): 
         'coming', 'found', 'source', 'soldiers', 'spiders', 'without', 'please', 'secret',
         'castle', 'behold', 'despair', 'human', 'hero', 'slayer', 'leader', 'world', 'water',
         'king', 'queen', 'emperor', 'baron', 'house', 'mountain', 'forest', 'desert', 'swamp',
-        'bridge', 'road', 'city', 'village', 'town', 'temple', 'tomb', 'cave', 'grave', 'ghost',
+        'bridge', 'road', 'city', 'village', 'town', 'temple', 'tomb', 'cave', 'ghost',
         'skeleton', 'witch', 'monster', 'creature', 'enemy', 'friend', 'power', 'magic', 'blood',
-        'fire', 'ice', 'poison', 'shadow', 'light', 'spirit', 'prepare', 'hordes'
+        'fire', 'ice', 'poison', 'shadow', 'light', 'spirit', 'hordes'
     ];
 
     for (const fileName of fileNames) {

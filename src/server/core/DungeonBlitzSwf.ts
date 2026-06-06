@@ -15,7 +15,7 @@ import { Config } from './config';
 export type DungeonBlitzSwfMode = 'local' | 'multiplayer';
 export type DungeonBlitzSwfLocale = 'en' | 'tr' | 'pt-br';
 
-export const SWF_RUNTIME_VERSION = '20260526-ptbr-v55';
+export const SWF_RUNTIME_VERSION = '20260605-ptbr-v131';
 
 const LOCAL_HOST = 'localhost';
 const REMOTE_HOST = Config.MULTIPLAYER_HOST;
@@ -49,7 +49,13 @@ const MOUNT_SPEED_DUNGEON_FLAG = 'bInstanced';
 const DISCONNECT_REFRESH_BUTTON_X_OFFSET_PX = 3;
 const DISCONNECT_REFRESH_BUTTON_Y_OFFSET_PX = -5;
 const UI1_DEFINE_EDIT_TEXT_REPLACEMENTS = new Map<number, StringReplacement[]>([
-    [2594, [{ oldValue: 'Dungeon', newValue: 'Masmorra' }]]
+    [1672, [{ oldValue: 'Collected Dyes', newValue: 'Corantes Coletados' }]],
+    [1711, [{ oldValue: 'Shirt', newValue: 'Camisa' }]],
+    [1712, [{ oldValue: 'Pants', newValue: 'Calça' }]],
+    [1716, [{ oldValue: 'Apply Dyes', newValue: 'Aplicar Corantes' }]],
+    [2581, [{ oldValue: 'Travel to', newValue: 'Viajar para' }]],
+    [2594, [{ oldValue: 'Dungeon', newValue: 'Masmorra' }]],
+    [2617, [{ oldValue: 'Travel to', newValue: 'Viajar para' }]]
 ]);
 const UI1_TAG_ONLY_OLDVALUES = new Set([
     'Add Friend',
@@ -101,7 +107,26 @@ const UI1_PORTUGUESE_EDIT_TEXT_XMAX = new Map<number, number>([
     [1290, 1700],
     [1291, 3400],
     [1303, 2700],
-    [1305, 4680]
+    [1305, 4680],
+    // Door plate captions ("Travel to" / "Dungeon") shown above world travel and dungeon entrances.
+    [2581, 2600],
+    [2594, 2200],
+    [2617, 2600],
+    // World map quest tooltip title (small "Missão Disponível" bubble).
+    // PT-BR mission/level names can exceed the English placeholder width and get
+    // clipped mid-letter. Both DefineEditText variants (1134 and 1139) need patching.
+    [1134, 6500],
+    [1139, 6500],
+    // World map quest tooltip title (larger popup with description). Wider baseline
+    // but still needs room for long PT-BR names.
+    [1109, 6500],
+    [1125, 6500],
+    // Dungeon hover popup title (e.g. "Fable of the Lost Temple" placeholder).
+    [1314, 6500],
+    [1672, 7200],
+    [1711, 1200],
+    [1712, 1200],
+    [1716, 5200],
 ]);
 const UI1_PORTUGUESE_EDIT_TEXT_BOUNDS = new Map<number, { xmin: number; xmax: number }>([
     [10, { xmin: -160, xmax: 960 }], // Guild tab title.
@@ -110,6 +135,7 @@ const UI1_PORTUGUESE_EDIT_TEXT_BOUNDS = new Map<number, { xmin: number; xmax: nu
     [439, { xmin: 180, xmax: 4532 }], // Hatchery unlocked callout.
     [625, { xmin: -1100, xmax: 5100 }], // Build the Tome of Power callout.
     [1305, { xmin: -180, xmax: 3820 }], // Score screen exit dungeon button.
+    [1314, { xmin: -2040, xmax: 6921 }], // Score screen dungeon title — expanded symmetrically so longer PT-BR names fit.
     [1059, { xmin: -520, xmax: 6680 }] // Map scroll header title.
 ]);
 const UI1_PORTUGUESE_EDIT_TEXT_FONT_HEIGHT = new Map<number, number>([
@@ -125,12 +151,147 @@ const UI1_PORTUGUESE_SPRITE_PLACEMENT_PATCHES = new Map<number, Map<number, { tx
     [626, new Map([[5, { tx: -2700 }]])],
     [1292, new Map([[2, { tx: 3000 }], [3, { tx: 1050 }]])],
     [1304, new Map([[6, { tx: -80 }]])],
-    [1306, new Map([[2, { scaleX: 1.74, tx: -260 }], [6, { scaleX: 1, tx: -560, ty: 185 }]])]
+    [1306, new Map([[2, { scaleX: 1.74, tx: -260 }], [6, { scaleX: 1, tx: -560, ty: 185 }]])],
+    [1717, new Map([[9, { scaleX: 1, tx: -450 }]])],
+    [1734, new Map([[35, { tx: 3500 }], [451, { tx: 10750 }], [472, { tx: 12120 }]])]
+]);
+const UI4_PORTUGUESE_SPRITE_PLACEMENT_PATCHES = new Map<number, Map<string, { tx?: number; ty?: number; scaleX?: number }>>([
+    [2278, new Map([['4:126', { tx: -4040 }], ['5:2277', { tx: -3640 }]])],
+    [3001, new Map([['759:2992', { tx: 160 }]])],
+    [2881, new Map([['10:2880', { scaleX: 1, tx: 278, ty: 140 }], ['10', { scaleX: 1, tx: 278, ty: 140 }]])],
+    [3375, new Map([['10:3371', { tx: -190, ty: 140 }], ['10', { tx: -190, ty: 140 }]])],
+    [3402, new Map([['2:3401', { tx: -460 }]])],
+    [3558, new Map([['9:3554', { scaleX: 0.84, tx: 1130, ty: 175 }], ['18:3557', { scaleX: 0.84, tx: 1130, ty: 175 }], ['18', { scaleX: 0.84, tx: 1130, ty: 175 }]])],
+    [3560, new Map([['76:3559', { scaleX: 0.78, tx: 4930 }]])],
+    [3580, new Map([['9:3578', { scaleX: 0.78, tx: 440, ty: 175 }], ['18:3579', { scaleX: 0.78, tx: 440, ty: 175 }], ['18', { scaleX: 0.78, tx: 440, ty: 175 }]])],
+    [3584, new Map([['9:3582', { scaleX: 0.72, tx: 500, ty: 175 }], ['18:3583', { scaleX: 0.72, tx: 500, ty: 175 }], ['18', { scaleX: 0.72, tx: 500, ty: 175 }]])],
+    [3586, new Map([['73:3585', { scaleX: 0.74, tx: 5130 }]])],
+    [3633, new Map([['29:3632', { scaleX: 0.78, tx: -80 }]])],
+    [3649, new Map([['9:3644', { scaleX: 1, tx: 2200 }], ['17:3647', { scaleX: 1, tx: 2200 }]])],
+    [3751, new Map([['9:3748', { scaleX: 0.86, tx: 740 }], ['18:3749', { scaleX: 0.86, tx: 740 }], ['9:3750', { scaleX: 0.86, tx: 740 }], ['18', { scaleX: 0.86, tx: 740 }]])],
+    [
+        3806,
+        new Map([
+            ['31:3764', { scaleX: 0.67, tx: 1843, ty: 4660 }],
+            ['38:3767', { scaleX: 0.66, tx: 1843 }],
+            ['134:3794', { scaleX: 0.69, tx: 470 }],
+            ['135:3795', { scaleX: 0.78, tx: 340 }],
+            ['136:3796', { scaleX: 0.78, tx: 369 }],
+            ['155:3804', { scaleX: 0.66, tx: 1844 }]
+        ])
+    ],
+    [3756, new Map([['9:3753', { scaleX: 1, tx: 940 }], ['18:3754', { scaleX: 1, tx: 940 }], ['9:3755', { scaleX: 1, tx: 940 }], ['18', { scaleX: 1, tx: 940 }]])],
+    [3746, new Map([['9:3743', { scaleX: 0.84, tx: 360, ty: 160 }], ['18:3744', { scaleX: 0.84, tx: 360, ty: 160 }], ['9:3745', { scaleX: 0.84, tx: 360, ty: 160 }], ['18', { scaleX: 0.84, tx: 360, ty: 160 }]])],
+    [3808, new Map([['68:3661', { scaleX: 0.78, tx: 16860 }]])],
+    [4038, new Map([['10:4035', { scaleX: 1, tx: -288, ty: 140 }], ['10', { scaleX: 1, tx: -288, ty: 140 }], ['8:4037', { scaleX: 1, tx: -288, ty: 140 }]])],
+    [4045, new Map([['10:4042', { tx: -168, ty: 140 }], ['10', { tx: -168, ty: 140 }], ['8:4044', { tx: -168, ty: 140 }]])],
+    [4263, new Map([['10:4261', { tx: 32, ty: 140 }], ['10', { tx: 32, ty: 140 }]])],
+    [4267, new Map([['1:4266', { scaleX: 1, tx: -940, ty: 74 }], ['2:127', { tx: -367, ty: 0 }]])],
+    [4300, new Map([['18:4266', { scaleX: 1, tx: 63, ty: 6602 }], ['19:127', { tx: 516, ty: 6528 }]])],
+    [4342, new Map([['968:4267', { tx: 1447, ty: 9870 }]])],
+    [811, new Map([['3:810', { tx: -3320 }]])],
 ]);
 const UI4_DEFINE_EDIT_TEXT_REPLACEMENTS = new Map<number, StringReplacement[]>([
     [138, [{ oldValue: 'Welcome to', newValue: 'Bem-vindo ao' }]], // The Spellbook
+    [716, [{ oldValue: 'Upgrade', newValue: 'Melhorar' }]],
+    [810, [{ oldValue: 'Click below to train additional Talent Points', newValue: 'Treine Pontos de Talento extras abaixo' }]],
+    [928, [{ oldValue: 'Talents Trained', newValue: 'Talentos Treinados' }]],
     [2304, [{ oldValue: 'Welcome to', newValue: 'Bem-vindo ao' }]], // Tome of Training
-    [4261, [{ oldValue: 'Hatch Egg', newValue: 'Chocar Ovo' }]]
+    [2572, [{ oldValue: 'Silver Sigil Store', newValue: 'Loja de Símbolos de Prata' }]],
+    [2575, [{ oldValue: 'Your Silver Sigil:', newValue: 'Seus Símbolos:' }]],
+    [2630, [{ oldValue: 'OWNED', newValue: 'OBTIDO' }]],
+    [2777, [{ oldValue: 'Crafting Materials', newValue: 'Materiais de Criação' }]],
+    [2863, [{ oldValue: 'Crafting', newValue: 'Criando' }]],
+    [2283, [{ oldValue: 'Requires: Tome Level 10', newValue: 'Requisitos: Tomo Nível 10' }]],
+    [3554, [{ oldValue: 'BUY TROVES', newValue: 'COMPRAR BAÚS' }]],
+    [3557, [{ oldValue: 'BUY TROVES', newValue: 'COMPRAR BAÚS' }]],
+    [3559, [{ oldValue: 'YOU RAN OUT OF TREASURE TROVES!', newValue: 'VOCÊ FICOU SEM BAÚS DO TESOURO!' }]],
+    [3578, [{ oldValue: 'BUY KEY', newValue: 'COMPRAR CHAVE' }]],
+    [3579, [{ oldValue: 'BUY KEY', newValue: 'COMPRAR CHAVE' }]],
+    [3582, [{ oldValue: 'BUY KEYS', newValue: 'COMPRAR CHAVES' }]],
+    [3583, [{ oldValue: 'BUY KEYS', newValue: 'COMPRAR CHAVES' }]],
+    [3585, [{ oldValue: 'YOU RAN OUT OF DRAGON KEYS', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' }]],
+    [3632, [{ oldValue: 'OPEN TROVES WITH KEYS', newValue: 'ABRA BAÚS COM CHAVES' }]],
+    [3644, [{ oldValue: 'DONE', newValue: 'FEITO' }]],
+    [3647, [{ oldValue: 'DONE', newValue: 'FEITO' }]],
+    [3648, [{ oldValue: 'DONE', newValue: 'FEITO' }]],
+    [3651, [{ oldValue: 'OPEN ANOTHER', newValue: 'ABRIR OUTRO' }]],
+    [3652, [{ oldValue: 'OPEN ANOTHER', newValue: 'ABRIR OUTRO' }]],
+    [3653, [{ oldValue: 'OPEN ANOTHER', newValue: 'ABRIR OUTRO' }]],
+    [3656, [{ oldValue: 'OPEN', newValue: 'ABRIR' }]],
+    [3657, [{ oldValue: 'OPEN', newValue: 'ABRIR' }]],
+    [3661, [{ oldValue: 'YOUR SIGILS', newValue: 'SEUS SÍMBOLOS' }]],
+    [3680, [{ oldValue: 'Silver Sigils', newValue: 'Símbolos de Prata' }]],
+    [3748, [{ oldValue: 'SIGIL STORE', newValue: 'LOJA DE SÍMBOLOS' }]],
+    [3749, [{ oldValue: 'SIGIL STORE', newValue: 'LOJA DE SÍMBOLOS' }]],
+    [3750, [{ oldValue: 'SIGIL STORE', newValue: 'LOJA DE SÍMBOLOS' }]],
+    [3743, [{ oldValue: 'GET KEYS', newValue: 'OBTER CHAVES' }]],
+    [3744, [{ oldValue: 'GET KEYS', newValue: 'OBTER CHAVES' }]],
+    [3745, [{ oldValue: 'GET KEYS', newValue: 'OBTER CHAVES' }]],
+    [3753, [{ oldValue: 'GET TROVES', newValue: 'OBTER BAÚS' }]],
+    [3754, [{ oldValue: 'GET TROVES', newValue: 'OBTER BAÚS' }]],
+    [3755, [{ oldValue: 'GET TROVES', newValue: 'OBTER BAÚS' }]],
+    [3764, [{ oldValue: 'Darkheart Apparition', newValue: 'Aparição do Coração Negro' }]],
+    [3765, [{ oldValue: 'Class Gear', newValue: 'Equipamento de Classe' }]],
+    [3766, [{ oldValue: 'Exotic Charms', newValue: 'Gemas Exóticas' }]],
+    [3767, [{ oldValue: 'Top Tier Dyes', newValue: 'Corantes de Alta Qualidade' }]],
+    [3768, [{ oldValue: 'Forge Catalysts', newValue: 'Catalisadores da Forja' }]],
+    [3769, [{ oldValue: 'Random Lvl 10 Pet', newValue: 'Pet Lvl 10 Aleatório' }]],
+    [3770, [{ oldValue: 'Pet Food', newValue: 'Ração para Pet' }]],
+    [3771, [{ oldValue: 'Piles of Gold', newValue: 'Pilhas de Ouro' }]],
+    [3772, [{ oldValue: 'Ivorystorm Guardian', newValue: 'Guardião de Ivorystorm' }]],
+    [3786, [{ oldValue: 'Silver Sigils', newValue: 'Símbolos de Prata' }]],
+    [3794, [{ oldValue: 'OPEN TREASURE TROVE', newValue: 'ABRIR BAÚ DOS TESOUROS' }]],
+    [3795, [{ oldValue: 'You will always get:', newValue: 'Você sempre receberá:' }]],
+    [3796, [{ oldValue: 'And one of these:', newValue: 'E um destes:' }]],
+    [3804, [{ oldValue: 'MOUNT', newValue: 'MONTARIA' }]],
+    [2959, [{ oldValue: 'Furnace', newValue: 'Fornalha' }]],
+    [2964, [{ oldValue: 'Tempering', newValue: 'Têmpera' }]],
+    [2969, [{ oldValue: 'Hammering', newValue: 'Martelo' }]],
+    [2974, [{ oldValue: 'Bellows', newValue: 'Fole' }]],
+    [2977, [{ oldValue: 'Coals', newValue: 'Carvões' }]],
+    [2992, [{ oldValue: 'Artisan Points: ', newValue: 'Pontos de Artesão: ' }]],
+    [2996, [{ oldValue: 'Reset', newValue: 'Resetar' }]],
+    [3012, [{ oldValue: 'Recipe Level: 10', newValue: 'Nível da Receita: 10' }]],
+    [3368, [{ oldValue: 'Artisan Level', newValue: 'Nível de Artesão' }]],
+    [3371, [{ oldValue: 'Artisan Skills', newValue: 'Artesão' }]],
+    [3394, [{ oldValue: 'Artisan Level', newValue: 'Nível Artesão' }]],
+    [
+        3395,
+        [
+            {
+                oldValue:
+                    'As you craft charms you will gain Artisan Points. These points can be used to improve your crafting skills and allow you to make better charms faster.',
+                newValue:
+                    'À medida que criar gemas, você ganhará Pontos de Artesão. Use esses pontos para aprimorar suas habilidades de criação e criar gemas melhores.'
+            }
+        ]
+    ],
+    [3401, [{ oldValue: 'You have unspent Artisan Points', newValue: 'Pontos de Artesão livres' }]],
+    [3423, [{ oldValue: 'Artisan Skills', newValue: 'Artesão' }]],
+    [3426, [{ oldValue: 'Artisan Level', newValue: 'Nível de Artesão' }]],
+    [3430, [{ oldValue: 'Artisan Skills', newValue: 'Artesão' }]],
+    [3443, [{ oldValue: 'Artisan Skills', newValue: 'Artesão' }]],
+    [3446, [{ oldValue: 'Artisan Experience', newValue: 'Experiência Artesã' }]],
+    [
+        3447,
+        [
+            {
+                oldValue:
+                    'As you craft charms you will gain Artisan Experience and Artisan Levels. For each level you will gain an Artistan Talent Point. Use these points to improve your forge and make you a better crafter.',
+                newValue:
+                    'Ao criar gemas, você ganhará Experiência Artesã e Níveis de Artesão. A cada nível, você recebe um Ponto de Talento Artesão para aprimorar sua forja.'
+            }
+        ]
+    ],
+    [4261, [{ oldValue: 'Hatch Egg', newValue: 'Chocar Ovo' }]],
+    [4035, [{ oldValue: 'Select Discipline', newValue: 'Selecionar Disciplina' }]],
+    [4037, [{ oldValue: 'Select Discipline', newValue: 'Selecionar Disciplina' }]],
+    [4042, [{ oldValue: 'Keep Discipline', newValue: 'Manter Disciplina' }]],
+    [4044, [{ oldValue: 'Keep Discipline', newValue: 'Manter Disciplina' }]],
+    [4245, [{ oldValue: 'New eggs in...', newValue: 'Novos ovos em...' }]],
+    [4266, [{ oldValue: 'Select a pet to train or egg to hatch', newValue: 'Escolha pet ou ovo para treinar/chocar' }]],
+    [4280, [{ oldValue: 'Train Pet', newValue: 'Treinar Pet' }]],
 ]);
 const UI4_PORTUGUESE_EDIT_TEXT_XMAX = new Map<number, number>([
     [375, 8400], // First crafted charm callout.
@@ -149,10 +310,90 @@ const UI4_PORTUGUESE_EDIT_TEXT_XMAX = new Map<number, number>([
     [2023, 4600], // Exit Dungeon tooltip.
     [2027, 3200], // Talents tooltip.
     [2038, 4600], // Spellbook tooltip.
+    [2283, 6400],
+    [2572, 9800],
+    [2575, 4200],
+    [2630, 5000],
+    [2777, 5600],
+    [2863, 2200],
+    [928, 3600],
     [2320, 8200],
+    [3578, 5000],
+    [3579, 5000],
+    [3582, 5200],
+    [3583, 5200],
+    [3585, 9000],
+    [3632, 9000],
+    [3661, 3300],
+    [3680, 3600],
+    [3748, 3900],
+    [3749, 3900],
+    [3750, 3900],
+    [3743, 4800],
+    [3744, 4800],
+    [3745, 4800],
+    [3764, 6200],
+    [3765, 5600],
+    [3766, 5600],
+    [3767, 6800],
+    [3768, 6200],
+    [3769, 5800],
+    [3770, 5200],
+    [3771, 5200],
+    [3772, 6000],
+    [3786, 3800],
+    [3794, 7600],
+    [3795, 7600],
+    [3796, 7600],
+    [3804, 2400],
+    [4035, 4600],
+    [4037, 4600],
+    [4042, 4300],
+    [4044, 4300],
+    [4245, 3000],
+    [4266, 8400],
+    [4280, 4200],
     [4000, 8200]
 ]);
+const UI4_PORTUGUESE_EDIT_TEXT_FONT_HEIGHT = new Map<number, number>([
+    [2630, 560],
+    [3578, 380],
+    [3579, 380],
+    [3582, 410],
+    [3583, 410],
+    [3743, 380],
+    [3744, 380],
+    [3745, 380]
+]);
 const UI4_PORTUGUESE_EDIT_TEXT_BOUNDS = new Map<number, { xmin: number; xmax: number }>([
+    [2277, { xmin: -40, xmax: 6900 }],
+    [2572, { xmin: 3560, xmax: 9800 }],
+    [2575, { xmin: -40, xmax: 4200 }],
+    [2630, { xmin: 2360, xmax: 5000 }],
+    [2777, { xmin: 360, xmax: 5600 }],
+    [2863, { xmin: -40, xmax: 2200 }],
+    [928, { xmin: -40, xmax: 3600 }],
+    [2959, { xmin: -40, xmax: 1900 }],
+    [2964, { xmin: -40, xmax: 2100 }],
+    [2969, { xmin: -40, xmax: 1800 }],
+    [2974, { xmin: -40, xmax: 1450 }],
+    [2977, { xmin: -40, xmax: 1600 }],
+    [2992, { xmin: -40, xmax: 3600 }],
+    [3012, { xmin: -40, xmax: 4600 }],
+    [3368, { xmin: -40, xmax: 3400 }],
+    [3371, { xmin: -40, xmax: 3300 }],
+    [3423, { xmin: -40, xmax: 5200 }],
+    [3426, { xmin: -40, xmax: 3400 }],
+    [3430, { xmin: -40, xmax: 7000 }],
+    [4035, { xmin: -40, xmax: 4600 }],
+    [4037, { xmin: -40, xmax: 4600 }],
+    [4042, { xmin: -40, xmax: 4300 }],
+    [4044, { xmin: -40, xmax: 4300 }],
+    [4245, { xmin: -40, xmax: 3000 }],
+    [4266, { xmin: -40, xmax: 8400 }],
+    [4280, { xmin: -40, xmax: 4200 }],
+    [3559, { xmin: 160, xmax: 17197 }],
+    [3585, { xmin: 160, xmax: 17197 }],
     [2311, { xmin: -360, xmax: 8525 }], // Tome tutorial first callout line.
     [4328, { xmin: -180, xmax: 4626 }] // Hatchery tutorial first callout line.
 ]);
@@ -294,15 +535,15 @@ const BRAZILIAN_PORTUGUESE_DISCIPLINE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Winter Order', newValue: 'Ordem do Inverno' },
     { oldValue: 'Infernal Circle', newValue: 'Circulo Infernal' },
     { oldValue: 'Accursed Coven', newValue: 'Conclave Amaldicoado' },
-    { oldValue: 'Tricks o’ Trade', newValue: 'Truques do Oficio' },
+    { oldValue: 'Tricks o’ Trade', newValue: 'Truques do Ofício' },
     { oldValue: 'Ambush & Onslaught', newValue: 'Emboscada e Investida' },
     { oldValue: 'From the Shadows', newValue: 'Das Sombras' },
-    { oldValue: 'The Dark Arts', newValue: 'Artes Sombrias' },
+    { oldValue: 'The Dark Arts', newValue: 'Artes Negras' },
     { oldValue: 'Martial Techniques', newValue: 'Tecnicas Marciais' },
     { oldValue: 'Chivalric Prowess', newValue: 'Proeza Cavalheiresca' },
     { oldValue: 'Sacred Castigations', newValue: 'Castigos Sagrados' },
     { oldValue: 'Theurgical Devotions', newValue: 'Devocoes Teurgicas' },
-    { oldValue: 'Discipline Masteries', newValue: 'Maestrias de Disciplina' },
+    { oldValue: 'Discipline Masteries', newValue: 'Maestrias da Disciplina' },
     { oldValue: 'Captain Fink', newValue: 'Capitão Fink' },
     { oldValue: 'Mayor Ristas', newValue: 'Prefeito Ristas' },
     { oldValue: 'No Quests Available', newValue: 'Não há missões disponíveis' },
@@ -394,14 +635,18 @@ const BRAZILIAN_PORTUGUESE_DISCIPLINE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Build the Forge', newValue: 'Construa a Forja' },
     { oldValue: 'Build the Tome of Power', newValue: 'Construa o Tomo do Poder' },
     { oldValue: 'Upgrade Building', newValue: 'Melhorar Construção' },
+    { oldValue: 'Requires: ', newValue: 'Requisitos: ' },
+    { oldValue: 'Requires: Tome Level ', newValue: 'Requisitos: Tomo Nível ' },
     { oldValue: 'Speed Up', newValue: 'Acelerar' },
     { oldValue: 'Free', newValue: 'Grátis' },
     { oldValue: 'Train', newValue: 'Treinar' },
     { oldValue: 'Tutorial Complete', newValue: 'Tutorial Concluído' },
     { oldValue: 'Leave the Keep', newValue: 'Saia do Forte' },
-    { oldValue: 'Select an ability on the left to upgrade', newValue: 'Escolha uma habilidade à esquerda para melhorar' },
+    { oldValue: 'Select an ability on the left to upgrade', newValue: 'Selecione uma habilidade para aprimorá-la' },
     { oldValue: 'Exit Dungeon', newValue: 'Sair da Masmorra' },
     { oldValue: 'Tome of Training', newValue: 'Tomo do Poder' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS!', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
     { oldValue: 'Use your Tome of Training to learn new abilities', newValue: 'Use seu Tomo do Poder para aprender novas habilidades' },
     { oldValue: 'Click this ability to get started', newValue: 'Clique nesta habilidade para começar' },
     { oldValue: 'Training abilities takes time and costs gold', newValue: 'Treinar habilidades leva tempo e custa ouro' },
@@ -459,8 +704,8 @@ const BRAZILIAN_PORTUGUESE_DISCIPLINE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Forums', newValue: 'Fóruns' },
     { oldValue: 'About', newValue: 'Sobre' },
     { oldValue: 'Contact', newValue: 'Contato' },
-    { oldValue: 'UI_1.swf', newValue: `UI_1.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsNR.swf', newValue: `LevelsNR.swf?rv=${SWF_RUNTIME_VERSION}` },
+    { oldValue: 'LevelsSRN.swf', newValue: `LevelsSRN.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsTut.swf', newValue: `LevelsTut.swf?rv=${SWF_RUNTIME_VERSION}` },
 ];
 
@@ -503,6 +748,16 @@ export const BRAZILIAN_PORTUGUESE_UI1_REPLACEMENTS: StringReplacement[] = [
 ];
 
 export const BRAZILIAN_PORTUGUESE_UI4_REPLACEMENTS: StringReplacement[] = [
+    { oldValue: 'Discipline Masteries', newValue: 'Maestrias da Disciplina' },
+    { oldValue: 'Select an ability on the left to upgrade', newValue: 'Selecione uma habilidade para aprimorá-la' },
+    { oldValue: 'YOU RAN OUT OF TREASURE TROVES!', newValue: 'VOCÊ FICOU SEM BAÚS DO TESOURO!' },
+    { oldValue: 'BUY TROVES', newValue: 'COMPRAR BAÚS' },
+    { oldValue: 'GET TROVES', newValue: 'OBTER BAÚS' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS!', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
+    { oldValue: 'BUY KEYS', newValue: 'COMPRAR CHAVES' },
+    { oldValue: 'BUY KEY', newValue: 'COMPRAR CHAVE' },
+    { oldValue: 'GET KEYS', newValue: 'OBTER CHAVES' },
     { oldValue: 'Exit House', newValue: 'Sair da Casa' },
     { oldValue: 'Visit House', newValue: 'Visitar Casa' },
     { oldValue: 'Backpack', newValue: 'Mochila' },
@@ -608,7 +863,8 @@ export const BRAZILIAN_PORTUGUESE_UI4_REPLACEMENTS: StringReplacement[] = [
     { oldValue: '- Socket charms into your gear to gain their bonuses', newValue: '- Equipe gemas no equipamento para ganhar bônus' },
     { oldValue: '- Click "Take Charm" to put this charm in your backpack', newValue: '- Clique em "Pegar Gema" para guardar na mochila' },
     { oldValue: 'Take Charm', newValue: 'Pegar Gema' },
-    { oldValue: 'Charm', newValue: 'Gema' },
+    { oldValue: 'Select a Recipe', newValue: 'Selecione uma Receita' },
+    { oldValue: 'Recipe Level: 10', newValue: 'Nível da Receita: 10' },
     { oldValue: 'Next', newValue: 'Próximo' },
     { oldValue: 'Welcome to', newValue: 'Bem-vindo à' }
 ];
@@ -627,6 +883,20 @@ export const BRAZILIAN_PORTUGUESE_LEVELS_HOME_TEXT_REPLACEMENTS: StringReplaceme
         oldValue: 'This is your place now.=This place has been overrun since the goblins came.=But I bet you can set things right.=That old forge once forged powerful magic items.=It could again.=The tome trained the most powerful heroes of the last age.=But that was then.=I can remember how great this place was once.=There was a fountain of tremendous magic.=And forests full of wild magical animals.=This place could be great again.=This village could thrive again.=If only a hero could lead the way.=Yep.',
         newValue: 'Este lugar é seu agora.=Este lugar está tomado desde que os goblins chegaram.=Mas aposto que você consegue colocar tudo nos eixos.=Aquela velha forja já forjou poderosos itens mágicos.=E pode voltar a forjar.=O tomo treinou os heróis mais poderosos da era passada.=Mas isso ficou no passado.=Eu me lembro de como este lugar já foi grandioso.=Havia uma fonte de magia poderosa.=E florestas repletas de animais mágicos selvagens.=Este lugar pode voltar a ser grandioso.=Esta vila pode voltar a prosperar.=Se ao menos um|uma herói|heroína pudesse nos guiar.=Sim.'
     }
+];
+
+export const BRAZILIAN_PORTUGUESE_LEVELS_SRN_REPLACEMENTS: StringReplacement[] = [
+    // Boss display names (health bar labels come from entity names in the level SWF)
+    { oldValue: 'Lord Yornak', newValue: 'Lorde Yornak' },
+    { oldValue: 'Tuatara Commander', newValue: 'Comandante Tuatara' },
+    { oldValue: 'Brood Mother', newValue: 'Mãe da Ninhada' },
+    { oldValue: "Hsalt's Pride", newValue: 'Orgulho de Hsalt' },
+    { oldValue: 'Grand Vizier Hslat', newValue: 'Grão-Vizir Hsalt' },
+    { oldValue: 'Devourer Queen', newValue: 'Rainha Devoradora' },
+    { oldValue: 'Aracnae', newValue: 'Arachnae' },
+    { oldValue: 'General Svar', newValue: 'General Svar' },
+    { oldValue: 'General Svath', newValue: 'General Svath' },
+    { oldValue: 'Taskmaster', newValue: 'Capataz' },
 ];
 
 export const BRAZILIAN_PORTUGUESE_LEVELS_NR_SCRIPT_REPLACEMENTS: StringReplacement[] = [
@@ -656,6 +926,9 @@ export const BRAZILIAN_PORTUGUESE_LEVELS_NR_SCRIPT_REPLACEMENTS: StringReplaceme
 const BRAZILIAN_PORTUGUESE_MAIN_SWF_SAFE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Captain Fink', newValue: 'Capitão Fink' },
     { oldValue: 'Mayor Ristas', newValue: 'Prefeito Ristas' },
+    // BRM NPC titles
+    { oldValue: 'Headwoman Gran', newValue: 'Diretora Gran' },
+    { oldValue: 'Alderman Abbod', newValue: 'Vereador Abbod' },
     { oldValue: 'No Quests Available', newValue: 'Não há missões disponíveis' },
     { oldValue: 'Quest Available\nTalk to ', newValue: 'Missão Disponível\nFale com ' },
     { oldValue: 'Quest Available\nHead to ', newValue: 'Missão Disponível\nVá para ' },
@@ -672,6 +945,11 @@ const BRAZILIAN_PORTUGUESE_MAIN_SWF_SAFE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Click on Mayor Ristas to hear more about your quest', newValue: 'Clique no Prefeito Ristas para saber mais da missão' },
     { oldValue: 'Talk to Captain Fink', newValue: 'Fale com o Capitão Fink' },
     { oldValue: 'Talk to Mayor Ristas', newValue: 'Fale com o Prefeito Ristas' },
+    // BRM Alderman Abbod bubble strings
+    { oldValue: 'Click on Alderman Abbod to accept your quest', newValue: 'Clique no Vereador Abbod para aceitar a missão' },
+    { oldValue: 'Click on Alderman Abbod to turn in the quest', newValue: 'Clique no Vereador Abbod para entregar a missão' },
+    { oldValue: 'Click on Alderman Abbod to hear more about your quest', newValue: 'Clique no Vereador Abbod para saber mais da missão' },
+    { oldValue: 'Talk to Alderman Abbod', newValue: 'Fale com o Vereador Abbod' },
     { oldValue: 'Dungeon Level: ', newValue: 'Nível da Masmorra: ' },
     { oldValue: 'Clear the Dungeon', newValue: 'Limpe a Masmorra' },
     { oldValue: ' ft', newValue: ' m' },
@@ -699,6 +977,25 @@ const BRAZILIAN_PORTUGUESE_MAIN_SWF_SAFE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Hit [Enter] to begin', newValue: 'Pressione [Enter] para começar' },
     { oldValue: 'Hit [Enter] to send', newValue: 'Pressione [Enter] para enviar' },
     { oldValue: 'Upgrade Building', newValue: 'Melhorar Construção' },
+    { oldValue: 'Must be level ', newValue: 'É necessário nível ' },
+    { oldValue: ' to upgrade', newValue: ' para melhorar' },
+    { oldValue: 'Requires: ', newValue: 'Requisitos: ' },
+    { oldValue: ' Level ', newValue: ' Nível ' },
+    { oldValue: ' Level', newValue: ' Nível' },
+    { oldValue: 'Requires: Tome Level ', newValue: 'Requisitos: Tomo Nível ' },
+    { oldValue: 'Requires: Hatchery Level ', newValue: 'Requisitos: Incubadora Nível ' },
+    {
+        oldValue: 'You have forsaken all safety for the Pure Death; you know the perfect strike, the incurable venom, the hidden cut that dooms your chosen foe to certain annihilation.',
+        newValue: 'Você abandonou toda a segurança em nome da Morte Pura; conhece o golpe perfeito, o veneno incurável e o corte oculto que condena seu inimigo escolhido à aniquilação certa.'
+    },
+    {
+        oldValue: 'You have sacrificed yourself to the Shadow Court, becoming a deadly trickster who strikes from afar, appears everywhere at once, and terrorizes enemies from the darkness.',
+        newValue: 'Você se sacrificou à Corte das Sombras, tornando-se um ladino mortal que ataca à distância, aparece em todos os lugares ao mesmo tempo e aterroriza os inimigos vindo das trevas.'
+    },
+    {
+        oldValue: 'You have mastered the heresies of the Codex Carnifex; you know that true pain comes with the death of the soul and that true victory takes a foe’s life force as your dark reward.',
+        newValue: 'Você dominou as heresias do Codex Carnifex; sabe que a verdadeira dor advém da morte da alma e que a verdadeira vitória consiste em tomar a força vital do inimigo como sua recompensa sombria.'
+    },
     { oldValue: 'Build the Forge', newValue: 'Construa a Forja' },
     { oldValue: 'Build the Tome of Power', newValue: 'Construa o Tomo do Poder' },
     { oldValue: 'Speed Up', newValue: 'Acelerar' },
@@ -712,6 +1009,37 @@ const BRAZILIAN_PORTUGUESE_MAIN_SWF_SAFE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Leave the Keep', newValue: 'Saia do Forte' },
     { oldValue: 'Exit Dungeon', newValue: 'Sair da Masmorra' },
     { oldValue: 'Tome of Training', newValue: 'Tomo do Poder' },
+    { oldValue: 'Select a Recipe', newValue: 'Selecione uma Receita' },
+    { oldValue: 'Recipe Level: ', newValue: 'Nível da Receita: ' },
+    { oldValue: 'Furnace', newValue: 'Fornalha' },
+    { oldValue: 'Decreases the time it takes to craft a charm', newValue: 'Reduz o tempo necessário para criar uma gema' },
+    { oldValue: 'Anvil', newValue: 'Bigorna' },
+    { oldValue: 'Increases your chance to craft a rare or legendary charm', newValue: 'Aumenta sua chance de criar uma gema rara ou lendária' },
+    { oldValue: 'Hammer', newValue: 'Martelo' },
+    { oldValue: 'Decreases material required to gain craft bonuses', newValue: 'Reduz materiais necessários para obter bônus' },
+    { oldValue: 'Bellows', newValue: 'Fole' },
+    { oldValue: 'Increases the total number of materials for each charm', newValue: 'Aumenta o número total de materiais para cada gema' },
+    { oldValue: 'Coals', newValue: 'Carvões' },
+    { oldValue: 'Increases the speed that craft experience is gained', newValue: 'Acelera o ganho de experiência de criação' },
+    { oldValue: 'Current Level: ', newValue: 'Nível atual: ' },
+    { oldValue: 'Next Level: ', newValue: 'Próximo nível: ' },
+    { oldValue: 'Train Pet', newValue: 'Treinar Pet' },
+    { oldValue: 'Hatch Egg', newValue: 'Chocar Ovo' },
+    { oldValue: 'Hatch - ', newValue: 'Chocar - ' },
+    { oldValue: 'Hatching - ', newValue: 'Chocando - ' },
+    { oldValue: 'Talent Point - ', newValue: 'Ponto de Talento - ' },
+    { oldValue: 'Talent Point', newValue: 'Ponto de Talento' },
+    { oldValue: 'Forge Boost', newValue: 'Bônus da Forja' },
+    { oldValue: 'Cannot upgrade while training an Ability', newValue: 'Não é possível melhorar treinando habilidade' },
+    { oldValue: 'Cannot upgrade while training Ability', newValue: 'Não é possível melhorar treinando habilidade' },
+    { oldValue: 'Cannot upgrade while training a Talent Point', newValue: 'Não é possível melhorar treinando Ponto' },
+    { oldValue: 'Cannot upgrade while crafting a Charm', newValue: 'Não é possível melhorar criando uma Gema' },
+    { oldValue: 'Cannot upgrade while training a pet', newValue: 'Não é possível melhorar treinando um pet' },
+    { oldValue: 'Cannot upgrade while hatching an egg', newValue: 'Não é possível melhorar chocando um ovo' },
+    { oldValue: 'You have unspent Artisan Points', newValue: 'Pontos de Artesão livres' },
+    { oldValue: 'Artisan Points', newValue: 'Pontos de Artesão' },
+    { oldValue: 'Artisan Skills', newValue: 'Artesão' },
+    { oldValue: 'View Materials', newValue: 'Ver Materiais' },
     { oldValue: 'Use your Tome of Training to learn new abilities', newValue: 'Use seu Tomo do Poder para aprender novas habilidades' },
     { oldValue: 'Click this ability to get started', newValue: 'Clique nesta habilidade para começar' },
     { oldValue: 'Training abilities takes time and costs gold', newValue: 'Treinar habilidades leva tempo e custa ouro' },
@@ -733,8 +1061,8 @@ const BRAZILIAN_PORTUGUESE_MAIN_SWF_SAFE_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Maybe that old man knows how to open this...', newValue: 'Talvez o zelador saiba como abrir isso...' },
     { oldValue: 'Wait, I need to take the fork in the road', newValue: 'Espera, preciso seguir pela bifurcação.' },
     { oldValue: "It's right below me", newValue: 'Está aqui embaixo.' },
-    { oldValue: 'UI_1.swf', newValue: `UI_1.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsNR.swf', newValue: `LevelsNR.swf?rv=${SWF_RUNTIME_VERSION}` },
+    { oldValue: 'LevelsSRN.swf', newValue: `LevelsSRN.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsTut.swf', newValue: `LevelsTut.swf?rv=${SWF_RUNTIME_VERSION}` },
 ];
 
@@ -745,14 +1073,20 @@ const BRAZILIAN_PORTUGUESE_MAIN_SWF_SCRIPT_REPLACEMENTS: StringReplacement[] = [
 
 const BRAZILIAN_PORTUGUESE_MAIN_SWF_UI_TEXT_REPLACEMENTS: StringReplacement[] = [
     { oldValue: 'Baglanti Koptu', newValue: 'Conexão Perdida' },
+    { oldValue: 'Lost Connection', newValue: 'Conexão Perdida' },
     { oldValue: 'Connection to the\nserver has been lost!', newValue: 'A conexão com o\nservidor foi perdida!' },
+    { oldValue: 'Client Error', newValue: 'Erro do Cliente' },
+    { oldValue: 'YOU RAN OUT OF TREASURE TROVES!', newValue: 'VOCÊ FICOU SEM BAÚS DO TESOURO!' },
+    { oldValue: 'YOU RAN OUT OF TREASURE TROVES', newValue: 'VOCÊ FICOU SEM BAÚS DO TESOURO!' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS!', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
+    { oldValue: 'YOU RAN OUT OF DRAGON KEYS', newValue: 'VOCÊ FICOU SEM CHAVES DO DRAGÃO!' },
     { oldValue: "You aren't in a guild.", newValue: 'Você não está em uma guilda.' },
     { oldValue: 'No players in this area.', newValue: 'Não há jogadores nesta área.' }
 ];
 
 const BRAZILIAN_PORTUGUESE_MAIN_SWF_TAG_REPLACEMENTS: StringReplacement[] = [
-    { oldValue: 'UI_1.swf', newValue: `UI_1.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsNR.swf', newValue: `LevelsNR.swf?rv=${SWF_RUNTIME_VERSION}` },
+    { oldValue: 'LevelsSRN.swf', newValue: `LevelsSRN.swf?rv=${SWF_RUNTIME_VERSION}` },
     { oldValue: 'LevelsTut.swf', newValue: `LevelsTut.swf?rv=${SWF_RUNTIME_VERSION}` },
 ];
 
@@ -826,6 +1160,45 @@ const DISCONNECT_SCREEN_RESTORE_ENGLISH: StringReplacement[] = [
     { oldValue: 'Baglanti Koptu', newValue: 'Lost Connection' },
     { oldValue: 'Istemci Hatasi', newValue: 'Client Error' }
 ];
+
+function buildBrazilianPortugueseDoorPlateLabelPatches(abc: ReturnType<typeof parseAbc>): ReturnType<typeof buildAppendedStringPatches> {
+    const patches: ReturnType<typeof buildAppendedStringPatches> = [];
+    const patchString = (index: number, oldValue: string, newValue: string, key: string): void => {
+        const replacementBytes = Buffer.from(newValue, 'utf8');
+        patches.push({
+            key,
+            start: abc.stringLenPositions[index],
+            end: abc.stringDataPositions[index] + Buffer.byteLength(oldValue, 'utf8'),
+            data: Buffer.concat([writeU30(replacementBytes.length), replacementBytes]),
+            detail: `${oldValue} -> ${newValue}`
+        });
+    };
+
+    let dungeonLabelIndex = -1;
+    let travelLabelIndex = -1;
+
+    for (let i = 1; i < abc.stringValues.length; i++) {
+        if (
+            abc.stringValues[i] === 'Dungeon' &&
+            abc.stringValues[i - 1] === 'Trap' &&
+            abc.stringValues[i + 1] === 'TravelToTownOne'
+        ) {
+            dungeonLabelIndex = i;
+        }
+        if (abc.stringValues[i] === 'Travel to' || abc.stringValues[i] === 'Return to') {
+            travelLabelIndex = i;
+        }
+    }
+
+    if (dungeonLabelIndex > 0) {
+        patchString(dungeonLabelIndex, 'Dungeon', 'Masmorra', 'ptbr-door-plate-dungeon-label');
+    }
+    if (travelLabelIndex > 0) {
+        patchString(travelLabelIndex, abc.stringValues[travelLabelIndex], 'Viajar para', 'ptbr-door-plate-travel-label');
+    }
+
+    return patches;
+}
 
 function getReplacements(mode: DungeonBlitzSwfMode, locale: DungeonBlitzSwfLocale): StringReplacement[] {
     const localeReplacements =
@@ -1179,9 +1552,12 @@ export function buildPortugueseUi4SwfBuffer(
         let data: Buffer = Buffer.from(sourceBody.subarray(dataStart, dataEnd));
         if (tagType === 39) {
             const spriteId = data.readUInt16LE(0);
-            const patched = patchUi4TooltipSprite(data, spriteId);
-            data = patched.data;
-            changed = patched.changed || changed;
+            const placementPatched = patchUi4SpritePlacements(data, spriteId);
+            data = placementPatched.data;
+            changed = placementPatched.changed || changed;
+            const tooltipPatched = patchUi4TooltipSprite(data, spriteId);
+            data = tooltipPatched.data;
+            changed = tooltipPatched.changed || changed;
         }
         if (tagType === 37 && data.length >= 2) {
             const patched = patchUi4EditText(data);
@@ -1729,6 +2105,86 @@ function patchUi1SpritePlacements(data: Buffer, spriteId: number): {
     return changed ? { data: Buffer.concat(chunks), changed } : { data, changed: false };
 }
 
+function patchUi4SpritePlacements(data: Buffer, spriteId: number): {
+    data: Buffer;
+    changed: boolean;
+} {
+    const depthPatches = UI4_PORTUGUESE_SPRITE_PLACEMENT_PATCHES.get(spriteId);
+    if (!depthPatches) {
+        return { data, changed: false };
+    }
+
+    const chunks: Buffer[] = [data.subarray(0, 4)];
+    let pos = 4;
+    let changed = false;
+
+    while (pos < data.length) {
+        const tagCodeAndLen = data.readUInt16LE(pos);
+        pos += 2;
+        const tagType = tagCodeAndLen >> 6;
+        let tagLen = tagCodeAndLen & 0x3f;
+        if (tagLen === 0x3f) {
+            tagLen = data.readUInt32LE(pos);
+            pos += 4;
+        }
+
+        const dataStart = pos;
+        const dataEnd = dataStart + tagLen;
+        let tagData = Buffer.from(data.subarray(dataStart, dataEnd));
+        if (tagType === 26 || tagType === 70) {
+            let cursor = 0;
+            const flags = tagData[cursor];
+            cursor += tagType === 70 ? 2 : 1;
+            const depth = tagData.readUInt16LE(cursor);
+            cursor += 2;
+            const characterId = (flags & 0x02) !== 0 ? tagData.readUInt16LE(cursor) : undefined;
+            const patch =
+                characterId !== undefined
+                    ? depthPatches.get(`${depth}:${characterId}`)
+                    : depthPatches.get(`${depth}`);
+            const hasMatrix = (flags & 0x04) !== 0;
+            if (patch && hasMatrix) {
+                if (characterId !== undefined) {
+                    cursor += 2;
+                }
+                const matrix = readSwfMatrix(tagData, cursor);
+                if (patch.scaleX === undefined) {
+                    if (patch.tx !== undefined) {
+                        writeSignedBits(tagData, matrix.txCursor, matrix.translateBits, patch.tx);
+                    }
+                    if (patch.ty !== undefined) {
+                        writeSignedBits(tagData, matrix.tyCursor, matrix.translateBits, patch.ty);
+                    }
+                } else {
+                    const encodedMatrix = encodeSwfMatrix(
+                        patch.scaleX,
+                        patch.scaleX,
+                        patch.tx ?? matrix.tx,
+                        patch.ty ?? matrix.ty
+                    );
+                    tagData = Buffer.concat([
+                        tagData.subarray(0, cursor),
+                        encodedMatrix,
+                        tagData.subarray(matrix.end)
+                    ]);
+                }
+                changed = true;
+            }
+        }
+
+        chunks.push(encodeSwfTag(tagType, tagData));
+        pos = dataEnd;
+        if (tagType === 0) {
+            if (pos < data.length) {
+                chunks.push(data.subarray(pos));
+            }
+            break;
+        }
+    }
+
+    return changed ? { data: Buffer.concat(chunks), changed } : { data, changed: false };
+}
+
 function patchUi1EditText(data: Buffer): {
     data: Buffer;
     changed: boolean;
@@ -1827,6 +2283,25 @@ function patchUi4EditText(data: Buffer): {
                 current.subarray(bounds.end)
             ]);
             changed = true;
+        }
+    }
+
+    const fontHeight = UI4_PORTUGUESE_EDIT_TEXT_FONT_HEIGHT.get(characterId);
+    if (fontHeight !== undefined) {
+        const bounds = readSwfRect(current, 2);
+        let cursor = bounds.end;
+        const flags = current[cursor];
+        cursor += 2;
+        const hasFont = (flags & 0x01) !== 0;
+        if (hasFont) {
+            cursor += 2;
+            const currentHeight = current.readUInt16LE(cursor);
+            if (currentHeight !== fontHeight) {
+                const patched = Buffer.from(current);
+                patched.writeUInt16LE(fontHeight, cursor);
+                current = patched;
+                changed = true;
+            }
         }
     }
 
@@ -2262,7 +2737,7 @@ function buildBrazilianPortugueseEmotePatches(
     }
 
     const menuCode = ctx.body.subarray(menuBody.codeStart, menuBody.codeStart + menuBody.codeLen);
-    const menuInsertionOffset = 407;
+    const menuInsertionOffset = 832;
     const expectedMenuInsertionBytes = Buffer.from([0x5d, 0x11]);
     if (!menuCode.subarray(menuInsertionOffset, menuInsertionOffset + expectedMenuInsertionBytes.length).equals(expectedMenuInsertionBytes)) {
         throw new Error('class_127.method_1237 has an unexpected emote menu construction block');
@@ -2317,7 +2792,7 @@ function buildBrazilianPortugueseEmotePatches(
     }
 
     const commandCode = ctx.body.subarray(commandBody.codeStart, commandBody.codeStart + commandBody.codeLen);
-    const insertionOffset = 222;
+    const insertionOffset = 103;
     const expectedInsertionBytes = Buffer.from([0x60, 0x01]);
     if (!commandCode.subarray(insertionOffset, insertionOffset + expectedInsertionBytes.length).equals(expectedInsertionBytes)) {
         throw new Error('class_127.method_1260 has an unexpected command parsing prologue');
@@ -2371,24 +2846,93 @@ const BRAZILIAN_PORTUGUESE_CHAT_CHANNEL_LABELS = new Map<string, string>([
     ['Say', 'Local']
 ]);
 
+const BRAZILIAN_PORTUGUESE_MAIN_SWF_DISCIPLINE_SCREEN_LABELS = new Map<string, string>([
+    ['Tricks o’ Trade', 'Truques do Ofício'],
+    ['Ambush & Onslaught', 'Emboscada e Investida'],
+    ['From the Shadows', 'Das Sombras'],
+    ['The Dark Arts', 'Artes Negras'],
+    ['Discipline Masteries', 'Maestrias da Disciplina']
+]);
+
+const BRAZILIAN_PORTUGUESE_MAIN_SWF_DISCIPLINE_SCREEN_LABEL_PATCHES = [
+    { methodIdx: 1054, offset: 287, expected: 'Tricks o’ Trade' },
+    { methodIdx: 1054, offset: 290, expected: 'Ambush & Onslaught' },
+    { methodIdx: 1054, offset: 293, expected: 'From the Shadows' },
+    { methodIdx: 1054, offset: 296, expected: 'The Dark Arts' },
+    { methodIdx: 1054, offset: 299, expected: 'Discipline Masteries' },
+    { methodIdx: 1054, offset: 337, expected: 'Discipline Masteries' }
+];
+
+function buildBrazilianPortugueseMainSwfDisciplineScreenLabelPatches(
+    ctx: ReturnType<typeof parseSwf>,
+    abc: ReturnType<typeof parseAbc>,
+    internString: StringInterner
+) {
+    for (const value of BRAZILIAN_PORTUGUESE_MAIN_SWF_DISCIPLINE_SCREEN_LABELS.values()) {
+        internString(value);
+    }
+
+    const patches = [];
+    for (const { methodIdx, offset, expected } of BRAZILIAN_PORTUGUESE_MAIN_SWF_DISCIPLINE_SCREEN_LABEL_PATCHES) {
+        const methodBody = abc.methodBodies.get(methodIdx);
+        if (!methodBody) {
+            throw new Error(`DungeonBlitz.swf method ${methodIdx} body not found for PT-BR discipline screen labels`);
+        }
+
+        const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
+        const instructions = new Map(disassemble(code, `m${methodIdx}`).map((instruction) => [instruction.offset, instruction]));
+        const instruction = instructions.get(offset);
+        if (!instruction || instruction.opcode !== 0x2c) {
+            throw new Error(`DungeonBlitz.swf method ${methodIdx} offset ${offset} is not the expected discipline screen pushstring`);
+        }
+
+        const oldIndex = instruction.operands[0]?.[1];
+        if (abc.stringValues[oldIndex] !== expected) {
+            throw new Error(`DungeonBlitz.swf method ${methodIdx} offset ${offset} pushes unexpected string "${abc.stringValues[oldIndex]}"`);
+        }
+
+        const newValue = BRAZILIAN_PORTUGUESE_MAIN_SWF_DISCIPLINE_SCREEN_LABELS.get(expected);
+        if (!newValue) {
+            throw new Error(`Missing PT-BR discipline screen label for ${expected}`);
+        }
+
+        const replacementOperand = writeU30(internString(newValue));
+        const operandStart = methodBody.codeStart + instruction.offset + 1;
+        const operandEnd = methodBody.codeStart + instruction.offset + instruction.size;
+        if (replacementOperand.length !== operandEnd - operandStart) {
+            throw new Error(`PT-BR discipline mastery class label "${newValue}" changed pushstring operand width`);
+        }
+
+        patches.push({
+            key: `ptbr-discipline-screen-label:${methodIdx}:${offset}`,
+            start: operandStart,
+            end: operandEnd,
+            data: replacementOperand,
+            detail: `localize displayed discipline screen label ${expected} -> ${newValue} without changing class identifiers`
+        });
+    }
+
+    return patches;
+}
+
 const BRAZILIAN_PORTUGUESE_CHAT_CHANNEL_PUSHSTRING_PATCHES = [
     {
-        methodIdx: 3756,
-        offsets: [182, 185, 188, 191, 1567, 1579, 1591, 1603, 1752, 1764, 1776, 1800],
+        methodIdx: 2430,
+        offsets: [225, 293, 314, 330, 796, 817, 833, 862, 2737, 2740, 2743, 2746],
         detail: 'localize chat channel menu labels, label-to-command mappings, and color-map keys'
     },
     {
-        methodIdx: 3716,
-        offsets: [1140, 1247, 1354, 1452],
+        methodIdx: 2498,
+        offsets: [1875, 2110, 2327, 3063],
         detail: 'localize chat channel status labels after slash-command parsing'
     },
     {
-        methodIdx: 3731,
-        offsets: [142, 156, 170, 184],
+        methodIdx: 2513,
+        offsets: [214, 247, 301, 326],
         detail: 'localize chat channel dropdown click comparisons'
     },
     {
-        methodIdx: 3557,
+        methodIdx: 3540,
         offsets: [414, 428, 456, 470],
         detail: 'localize automatic chat channel fallback comparisons'
     }
@@ -2449,14 +2993,14 @@ function buildBrazilianPortugueseChatChannelMenuLayoutPatches(
     ctx: ReturnType<typeof parseSwf>,
     abc: ReturnType<typeof parseAbc>
 ) {
-    const methodIdx = 3722;
+    const methodIdx = 2504;
     const methodBody = abc.methodBodies.get(methodIdx);
     if (!methodBody) {
         throw new Error('DungeonBlitz.swf class_127 channel menu body not found for PT-BR layout patch');
     }
 
     const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
-    const insertionOffset = 324;
+    const insertionOffset = 495;
     const expectedBytes = Buffer.from([0x60, 0x12, 0x62, 0x08]);
     if (!code.subarray(insertionOffset, insertionOffset + expectedBytes.length).equals(expectedBytes)) {
         throw new Error('DungeonBlitz.swf class_127 channel menu layout block is not at the expected offset');
@@ -2499,7 +3043,7 @@ function buildBrazilianPortugueseChatCommandMenuLabelPatches(
     abc: ReturnType<typeof parseAbc>,
     internString: StringInterner
 ) {
-    const methodIdx = 3652;
+    const methodIdx = 2434;
     const methodBody = abc.methodBodies.get(methodIdx);
     if (!methodBody) {
         throw new Error('DungeonBlitz.swf class_127.method_1237 body not found for PT-BR chat command labels');
@@ -2507,7 +3051,7 @@ function buildBrazilianPortugueseChatCommandMenuLabelPatches(
 
     const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
     const instructions = new Map(disassemble(code, `m${methodIdx}`).map((instruction) => [instruction.offset, instruction]));
-    const offset = 256;
+    const offset = 321;
     const instruction = instructions.get(offset);
     if (!instruction || instruction.opcode !== 0x2c) {
         throw new Error('DungeonBlitz.swf class_127.method_1237 leave label is not the expected pushstring');
@@ -2532,6 +3076,373 @@ function buildBrazilianPortugueseChatCommandMenuLabelPatches(
         data: replacementOperand,
         detail: 'localize displayed PT-BR chat command label Leave -> Sair without changing command keys'
     }];
+}
+
+const BRAZILIAN_PORTUGUESE_ITEM_TYPE_LABELS = new Map([
+    ['Mount', 'Montaria'],
+    ['Potion', 'Poção'],
+    ['Charm', 'Gema'],
+    ['Catalyst', 'Catalisador'],
+    ['Pet Food', 'Comida de Pet']
+]);
+
+function setLocalInstruction(localIndex: number): Buffer {
+    if (localIndex >= 0 && localIndex <= 3) {
+        return Buffer.from([0xd4 + localIndex]);
+    }
+    return Buffer.concat([Buffer.from([0x63]), writeU30(localIndex)]);
+}
+
+function getLocalInstruction(localIndex: number): Buffer {
+    if (localIndex >= 0 && localIndex <= 3) {
+        return Buffer.from([0xd0 + localIndex]);
+    }
+    return Buffer.concat([Buffer.from([0x62]), writeU30(localIndex)]);
+}
+
+function buildStringLocalMappingCode(
+    localIndex: number,
+    replacements: Map<string, string>,
+    internString: StringInterner
+): Buffer {
+    const blocks = [];
+    for (const [oldValue, newValue] of replacements) {
+        const assignment = Buffer.concat([
+            pushStringInstruction(internString(newValue)),
+            setLocalInstruction(localIndex)
+        ]);
+        const condition = Buffer.concat([
+            getLocalInstruction(localIndex),
+            pushStringInstruction(internString(oldValue)),
+            Buffer.from([0xab]) // equals
+        ]);
+        blocks.push(Buffer.concat([
+            condition,
+            Buffer.from([0x12]), writeS24(assignment.length), // iffalse
+            assignment
+        ]));
+    }
+    return Buffer.concat(blocks);
+}
+
+function buildBrazilianPortuguesePushStringOperandPatch(
+    ctx: ReturnType<typeof parseSwf>,
+    abc: ReturnType<typeof parseAbc>,
+    internString: StringInterner,
+    methodIdx: number,
+    offset: number,
+    oldValue: string,
+    newValue: string,
+    key: string
+) {
+    const methodBody = abc.methodBodies.get(methodIdx);
+    if (!methodBody) {
+        throw new Error(`DungeonBlitz.swf method ${methodIdx} body not found for PT-BR item type labels`);
+    }
+
+    const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
+    const instruction = disassemble(code, `m${methodIdx}`).find((candidate) => candidate.offset === offset);
+    if (!instruction || instruction.opcode !== 0x2c) {
+        throw new Error(`DungeonBlitz.swf method ${methodIdx} offset ${offset} is not the expected item-type pushstring`);
+    }
+
+    const oldIndex = instruction.operands[0]?.[1];
+    if (abc.stringValues[oldIndex] !== oldValue) {
+        throw new Error(`DungeonBlitz.swf method ${methodIdx} offset ${offset} pushes unexpected string "${abc.stringValues[oldIndex]}"`);
+    }
+
+    const replacementOperand = writeU30(internString(newValue));
+    const operandStart = methodBody.codeStart + instruction.offset + 1;
+    const operandEnd = methodBody.codeStart + instruction.offset + instruction.size;
+    if (replacementOperand.length !== operandEnd - operandStart) {
+        throw new Error(`PT-BR item type label "${newValue}" changed pushstring operand width at m${methodIdx}:${offset}`);
+    }
+
+    return {
+        key,
+        start: operandStart,
+        end: operandEnd,
+        data: replacementOperand,
+        detail: `localize displayed PT-BR item type label ${oldValue} -> ${newValue}`
+    };
+}
+
+function buildBrazilianPortugueseItemTypeLabelPatches(
+    ctx: ReturnType<typeof parseSwf>,
+    abc: ReturnType<typeof parseAbc>,
+    internString: StringInterner
+) {
+    for (const [oldValue, newValue] of BRAZILIAN_PORTUGUESE_ITEM_TYPE_LABELS) {
+        internString(oldValue);
+        internString(newValue);
+    }
+
+    const patches = [
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            1998,
+            214,
+            'Mount',
+            'Montaria',
+            'ptbr-item-type-label:mount-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            2182,
+            178,
+            'Pet Food',
+            'Comida de Pet',
+            'ptbr-item-type-label:pet-food-basic-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            2008,
+            965,
+            'Mount',
+            'Montaria',
+            'ptbr-item-type-label:mount-armory-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            1540,
+            69,
+            'Catalyst',
+            'Catalisador',
+            'ptbr-item-type-label:catalyst-slot-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            2321,
+            194,
+            'Catalyst',
+            'Catalisador',
+            'ptbr-item-type-label:catalyst-inventory-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            2246,
+            124,
+            'Charm',
+            'Gema',
+            'ptbr-item-type-label:charm-inventory-tooltip'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            1520,
+            81,
+            'Crafting Materials',
+            'Materiais de Criação',
+            'ptbr-inventory-label:crafting-materials-title'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            3359,
+            615,
+            'Charms',
+            'Gemas',
+            'ptbr-inventory-label:charms-category'
+        ),
+        buildBrazilianPortuguesePushStringOperandPatch(
+            ctx,
+            abc,
+            internString,
+            3359,
+            618,
+            'Crafting Materials',
+            'Materiais de Criação',
+            'ptbr-inventory-label:crafting-materials-category'
+        )
+    ];
+
+    const dynamicPatches = [
+        {
+            methodIdx: 1999,
+            insertionOffset: 250,
+            localIndex: 8,
+            replacements: new Map([
+                ['Potion', 'Poção'],
+                ['Catalyst', 'Catalisador'],
+                ['Pet Food', 'Comida de Pet']
+            ]),
+            key: 'ptbr-item-type-label:consumable-tooltip',
+            detail: 'localize consumable tooltip type label after reading the canonical consumable type'
+        },
+        {
+            methodIdx: 2130,
+            insertionOffset: 1240,
+            localIndex: 8,
+            replacements: BRAZILIAN_PORTUGUESE_ITEM_TYPE_LABELS,
+            key: 'ptbr-item-type-label:royal-store-card-type-field',
+            detail: 'localize royal store card type field immediately before SetText without changing store item type logic'
+        },
+        {
+            methodIdx: 2124,
+            insertionOffset: 245,
+            localIndex: 2,
+            replacements: BRAZILIAN_PORTUGUESE_ITEM_TYPE_LABELS,
+            key: 'ptbr-item-type-label:royal-store-card',
+            detail: 'localize royal store card type label after deriving it from canonical store and consumable types'
+        }
+    ];
+
+    for (const patch of dynamicPatches) {
+        const methodBody = abc.methodBodies.get(patch.methodIdx);
+        if (!methodBody) {
+            throw new Error(`DungeonBlitz.swf method ${patch.methodIdx} body not found for PT-BR item type labels`);
+        }
+
+        const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
+        const marker = buildStringLocalMappingCode(patch.localIndex, patch.replacements, internString);
+        if (code.includes(marker)) {
+            continue;
+        }
+
+        patches.push(
+            {
+                key: `${patch.key}:code-length`,
+                start: methodBody.codeLenPos,
+                end: methodBody.codeStart,
+                data: writeU30(methodBody.codeLen + marker.length),
+                detail: `increase method ${patch.methodIdx} code length for PT-BR item type label mapping`
+            },
+            {
+                key: patch.key,
+                start: methodBody.codeStart + patch.insertionOffset,
+                end: methodBody.codeStart + patch.insertionOffset,
+                data: marker,
+                detail: patch.detail
+            },
+            ...buildBranchAdjustmentPatches(
+                methodBody,
+                code,
+                patch.insertionOffset,
+                marker.length,
+                patch.key
+            )
+        );
+    }
+
+    return patches;
+}
+
+function buildLanguageCommandPassthroughPatches(
+    ctx: ReturnType<typeof parseSwf>,
+    abc: ReturnType<typeof parseAbc>,
+    internString: StringInterner
+) {
+    const chatClassIndex = classIndexByName(abc, 'class_127');
+    if (chatClassIndex === null) {
+        throw new Error('class_127 not found in DungeonBlitz.swf');
+    }
+
+    const sendChatMethodIdx = methodIdxForTrait(abc.instances[chatClassIndex].traits, abc, 'method_537');
+    if (sendChatMethodIdx === null) {
+        throw new Error('class_127.method_537 not found in DungeonBlitz.swf');
+    }
+
+    const sendChatBody = abc.methodBodies.get(sendChatMethodIdx);
+    if (!sendChatBody) {
+        throw new Error('class_127.method_537 body not found in DungeonBlitz.swf');
+    }
+
+    const code = ctx.body.subarray(sendChatBody.codeStart, sendChatBody.codeStart + sendChatBody.codeLen);
+    const scopeSetupOffset = code.indexOf(Buffer.from([0xd0, 0x30])); // getlocal0; pushscope
+    if (scopeSetupOffset < 0) {
+        throw new Error('class_127.method_537 missing expected getlocal0/pushscope prologue');
+    }
+
+    const insertionOffset = scopeSetupOffset + 2;
+    const lowerCaseIndex = findMultinameIndex(abc, 'toLowerCase', 387);
+    const indexOfIndex = findMultinameIndex(abc, 'indexOf', 623);
+    const canSendPacketIndex = requireMultinameIndex(abc, 'CanSendPacket');
+    const linkUpdaterIndex = requireMultinameIndex(abc, 'linkUpdater');
+    const writeChatMessageIndex = requireMultinameIndex(abc, 'WriteChatMessage');
+    const var1Index = requireMultinameIndex(abc, 'var_1');
+    const slashPrefixIndex = internString('/lang:');
+    const backslashPrefixIndex = internString('\\lang:');
+    const marker = Buffer.concat([
+        Buffer.from([0xd2]),
+        buildCallPropertyInstruction(0x46, lowerCaseIndex, 0),
+        pushStringInstruction(slashPrefixIndex),
+        buildCallPropertyInstruction(0x46, indexOfIndex, 1)
+    ]);
+    if (code.includes(marker)) {
+        return [];
+    }
+
+    const buildPrefixBlock = (prefixIndex: number): Buffer => {
+        const condition = Buffer.concat([
+            Buffer.from([0xd2]),
+            buildCallPropertyInstruction(0x46, lowerCaseIndex, 0),
+            pushStringInstruction(prefixIndex),
+            buildCallPropertyInstruction(0x46, indexOfIndex, 1),
+            pushByteInstruction(0),
+            Buffer.from([0xab])
+        ]);
+        const canSend = Buffer.concat([
+            Buffer.from([0x60]), writeU30(var1Index),
+            buildCallPropertyInstruction(0x46, canSendPacketIndex, 0)
+        ]);
+        const sendCommand = Buffer.concat([
+            Buffer.from([0x60]), writeU30(var1Index),
+            Buffer.from([0x66]), writeU30(linkUpdaterIndex),
+            Buffer.from([0xd1, 0xd2]),
+            buildCallPropertyInstruction(0x4f, writeChatMessageIndex, 2)
+        ]);
+        const returnVoid = Buffer.from([0x47]);
+        const firstIfFalseSize = 4;
+        const secondIfFalseSize = 4;
+        const blockLength = condition.length + firstIfFalseSize + canSend.length + secondIfFalseSize + sendCommand.length + returnVoid.length;
+        const firstIfFalseStart = condition.length;
+        const secondIfFalseStart = condition.length + firstIfFalseSize + canSend.length;
+        const returnVoidStart = condition.length + firstIfFalseSize + canSend.length + secondIfFalseSize + sendCommand.length;
+        return Buffer.concat([
+            condition,
+            Buffer.from([0x12]), writeS24(blockLength - (firstIfFalseStart + firstIfFalseSize)),
+            canSend,
+            Buffer.from([0x12]), writeS24(returnVoidStart - (secondIfFalseStart + secondIfFalseSize)),
+            sendCommand,
+            returnVoid
+        ]);
+    };
+
+    const injection = Buffer.concat([
+        buildPrefixBlock(slashPrefixIndex),
+        buildPrefixBlock(backslashPrefixIndex)
+    ]);
+
+    return [
+        {
+            key: 'language-command-silent-forward',
+            start: sendChatBody.codeStart + insertionOffset,
+            end: sendChatBody.codeStart + insertionOffset,
+            data: injection,
+            detail: 'send /lang:* commands to the server before public chat echo'
+        },
+        {
+            key: 'language-command-silent-forward-code-length',
+            start: sendChatBody.codeLenPos,
+            end: sendChatBody.codeStart,
+            data: writeU30(sendChatBody.codeLen + injection.length),
+            detail: 'increase class_127.method_537 code length for silent /lang forwarding'
+        }
+    ];
 }
 
 function requireMultinameIndex(abc: ReturnType<typeof parseAbc>, name: string): number {
@@ -2726,13 +3637,17 @@ export function buildDungeonBlitzSwfVariantBuffer(
     patches.push(...buildCharacterCreationGenderPatch(ctx, abc));
     patches.push(...buildDisconnectRefreshButtonPlacementPatch(ctx, abc));
     patches.push(...buildLocalizationReloadStatusPatch(ctx, abc, internString));
+    patches.push(...buildLanguageCommandPassthroughPatches(ctx, abc, internString));
     if (locale === 'pt-br' && isBrazilianPortugueseEmotePatchEnabled()) {
         patches.push(...buildBrazilianPortugueseEmotePatches(ctx, abc, internString));
     }
     if (locale === 'pt-br') {
+        patches.push(...buildBrazilianPortugueseDoorPlateLabelPatches(abc));
+        patches.push(...buildBrazilianPortugueseMainSwfDisciplineScreenLabelPatches(ctx, abc, internString));
         patches.push(...buildBrazilianPortugueseChatChannelLabelPatches(ctx, abc, internString));
         patches.push(...buildBrazilianPortugueseChatChannelMenuLayoutPatches(ctx, abc));
         patches.push(...buildBrazilianPortugueseChatCommandMenuLabelPatches(ctx, abc, internString));
+        patches.push(...buildBrazilianPortugueseItemTypeLabelPatches(ctx, abc, internString));
     }
     patches.push(...buildAppendedStringPatches(abc, appendedStrings));
 

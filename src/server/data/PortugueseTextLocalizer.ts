@@ -35,6 +35,15 @@ const EXACT_PHRASES: Record<string, string> = {
     'Magic Forge Level 10': 'Forja Mágica Nível 10',
     'Tome of Training': 'Tomo do Poder',
     'Use your Tome of Training to learn new abilities': 'Use seu Tomo do Poder para aprender novas habilidades',
+    'Unlocks all Rank 2 abilities for training': 'Libera o treino de habilidades Ranque 2',
+    'Unlocks all Rank 3 abilities for training': 'Libera o treino de habilidades Ranque 3',
+    'Unlocks all Rank 4 abilities for training': 'Libera o treino de habilidades Ranque 4',
+    'Unlocks all Rank 5 abilities for training': 'Libera o treino de habilidades Ranque 5',
+    'Unlocks all Rank 6 abilities for training': 'Libera o treino de habilidades Ranque 6',
+    'Unlocks all Rank 7 abilities for training': 'Libera o treino de habilidades Ranque 7',
+    'Unlocks all Rank 8 abilities for training': 'Libera o treino de habilidades Ranque 8',
+    'Unlocks all Rank 9 abilities for training': 'Libera o treino de habilidades Ranque 9',
+    'Unlocks all Rank 10 abilities for training': 'Libera o treino de habilidades Ranque 10',
     'Upgrade Building': 'Melhorar Construção',
     'Speed Up': 'Acelerar',
     Free: 'Grátis',
@@ -42,6 +51,27 @@ const EXACT_PHRASES: Record<string, string> = {
     Reply: 'Responder',
     Pet: 'Mascote',
     Mount: 'Montaria',
+    Charm: 'Gema',
+    Potion: 'Poção',
+    'Forge Boost': 'Bônus da Forja',
+    RespecStone: 'Gema',
+    Consumable: 'Poção',
+    CharmRemover: 'Gema',
+    "Arachnae's Swamp": 'Pântano de Arachnae',
+    'de Arachnae Pantano': 'Pântano de Arachnae',
+    'de Arachnae Pântano': 'Pântano de Arachnae',
+    "Tinkerer's Soul": 'Alma de Inventor',
+    'Ivorystorm Guardian': 'Guardião de Ivorystorm',
+    'Darkheart Apparition': 'Aparição do Coração Negro',
+    'Treasure Trove': 'Baú dos Tesouros',
+    'Silver Sigils': 'Símbolos de Prata',
+    'Class Gear': 'Equipamento de Classe',
+    'Exotic Charms': 'Gemas Exóticas',
+    'Top Tier Dyes': 'Corantes de Alta Qualidade',
+    'Forge Catalysts': 'Catalisadores da Forja',
+    'Random Lvl 10 Pet': 'Pet Lvl 10 Aleatório',
+    'Pet Food': 'Ração para Pet',
+    'Piles of Gold': 'Pilhas de Ouro',
     Paladin: 'Paladino',
     Rogue: 'Ladino',
     Mage: 'Mago',
@@ -605,6 +635,16 @@ export function localizeUnknownPortugueseText(source: string): string {
     const value = normalizeKey(source);
     if (!value || !/[A-Za-z]{2,}/.test(value)) {
         return source;
+    }
+
+    const mustBeLevel = value.match(/^Must be level\s+(.+?)\s+to upgrade$/i);
+    if (mustBeLevel) {
+        return normalizeDialogueTextForClient(`É necessário nível ${mustBeLevel[1]} para melhorar`, 'pt-br');
+    }
+
+    const charmRecipes = value.match(/^Unlocks Rank\s+(.+?)\s+charm recipes$/i);
+    if (charmRecipes) {
+        return normalizeDialogueTextForClient(`Libera receitas de gemas de Ranque ${charmRecipes[1]}`, 'pt-br');
     }
 
     const exact = EXACT_PHRASES[value] ?? PROPER_PHRASES[value];

@@ -14,7 +14,6 @@ import { getEquippedGearGoldFind } from '../utils/GearGoldBonuses';
 import { getActivePotionBonuses } from '../utils/ConsumableState';
 import { normalizeCharacterMaterials } from '../utils/MaterialInventory';
 import { PetHandler } from './PetHandler';
-import { Config } from '../core/config';
 
 interface RewardRequest {
     receiverId: number;
@@ -496,7 +495,10 @@ export class RewardHandler {
     private static spawnLoot(client: Client, x: number, y: number, reward: LootReward, offsetX: number = 0, offsetY: number = 0): void {
         const lootId = ++RewardHandler.nextLootId;
         client.pendingLoot.set(lootId, reward);
-        client.send(0x32, RewardHandler.buildLootdrop(lootId, x + offsetX, y + offsetY, reward));
+        const finalX = x + offsetX;
+        const finalY = y + offsetY;
+        const payload = RewardHandler.buildLootdrop(lootId, finalX, finalY, reward);
+        client.send(0x32, payload);
     }
 
     private static resolveXpRewardDebug(client: Client, amount: number, packetExp: number = amount): XpRewardDebug {
@@ -681,17 +683,22 @@ export class RewardHandler {
 
         const xpDebug = RewardHandler.resolveXpRewardDebug(client, exp, reward.exp);
         const shouldLogRewardRoll = shouldRollMaterial || shouldRollGear || dyeDebug.eligible || packetGold > 0 || goldFindRate > 0 || xpDebug.attempted;
-        if (Config.REWARD_ROLL_DEBUG && shouldLogRewardRoll) {
+        if (shouldLogRewardRoll && process.env.REWARD_ROLL_DEBUG === 'true') {
             console.log('[RewardRollDebug]', {
                 character: client.character?.name ?? '',
+                dialogueLanguage: client.character?.dialogueLanguage ?? '',
                 level: client.currentLevel,
                 sourceId: reward.sourceId,
                 receiverId: reward.receiverId,
                 entName,
+                sourceResolved: Boolean(sourceEntity),
+                entTypeFound: Boolean(entType),
                 entRank,
                 rewardClass,
                 playerClass,
                 realm,
+                isDungeonLevel,
+                shouldApplyDropTables,
                 allowItemDrop,
                 itemLootAllowedByClass,
                 rolls: {
@@ -703,7 +710,7 @@ export class RewardHandler {
                         charmFind: charmBonuses.craftFind,
                         potionFind: potionBonuses.craftFind,
                         totalFindRate: materialFindRate,
-                        finalMultiplier: packetMaterialMultiplier,
+                        finalMultiplier: Math.max(packetMaterialMultiplier, 1 + materialFindRate),
                         finalChance: materialChance,
                         dropRoll: materialRoll,
                         dropped: materialId > 0,
@@ -989,6 +996,10 @@ export class RewardHandler {
     static handlePickupLootdrop(client: Client, data: Buffer): void {
         const br = new BitReader(data);
         const lootId = br.readMethod9();
+        RewardHandler.collectPendingLootdrop(client, lootId);
+    }
+
+    private static collectPendingLootdrop(client: Client, lootId: number): void {
         const reward = client.pendingLoot.get(lootId);
         if (!reward || !client.character) {
             return;

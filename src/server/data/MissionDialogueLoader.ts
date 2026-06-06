@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { MissionDef, MissionLoader } from './MissionLoader';
+import { DialogueTranslationLoader } from './DialogueTranslationLoader';
 import { normalizeDialogueTextForClient } from './DialogueTextNormalizer';
 
 type MissionDialogueField = 'OfferText' | 'ActiveText' | 'ReturnText' | 'PraiseText';
@@ -8,6 +9,10 @@ type MissionDialogueField = 'OfferText' | 'ActiveText' | 'ReturnText' | 'PraiseT
 type RawMissionDialogueEntry = Partial<Record<MissionDialogueField, string>>;
 type RawMissionDialogueFile = {
     missions?: Record<string, RawMissionDialogueEntry>;
+};
+type MissionDialogueOptions = {
+    playerClass?: string;
+    playerGender?: string;
 };
 
 export class MissionDialogueLoader {
@@ -92,7 +97,7 @@ export class MissionDialogueLoader {
         return this.loaded;
     }
 
-    static getDialogueText(missionId: number, dialogueId: number, locale: string): string {
+    static getDialogueText(missionId: number, dialogueId: number, locale: string, options: MissionDialogueOptions = {}): string {
         const field = this.DIALOGUE_FIELD_BY_ID[dialogueId];
         const missionDef = MissionLoader.getMissionDef(missionId);
         if (!field || !missionDef) {
@@ -103,13 +108,21 @@ export class MissionDialogueLoader {
         if (normalizedLocale !== this.DEFAULT_LOCALE) {
             const localized = this.localizedDialogs.get(normalizedLocale)?.get(missionId)?.[field];
             if (localized) {
-                return normalizeDialogueTextForClient(localized, normalizedLocale);
+                return DialogueTranslationLoader.localizeResolvedText(localized, normalizedLocale, {
+                    playerClass: options.playerClass,
+                    playerGender: options.playerGender
+                });
             }
         }
 
-        return normalizeDialogueTextForClient(
-            this.sanitizeText((missionDef as MissionDef & Record<MissionDialogueField, string | undefined>)[field]),
-            normalizedLocale
-        );
+        const fallback = this.sanitizeText((missionDef as MissionDef & Record<MissionDialogueField, string | undefined>)[field]);
+        if (normalizedLocale !== this.DEFAULT_LOCALE) {
+            return DialogueTranslationLoader.translateText(fallback, normalizedLocale, {
+                playerClass: options.playerClass,
+                playerGender: options.playerGender
+            });
+        }
+
+        return normalizeDialogueTextForClient(fallback, normalizedLocale);
     }
 }

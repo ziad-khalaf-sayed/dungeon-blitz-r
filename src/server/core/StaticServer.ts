@@ -7,9 +7,12 @@ import { Config } from './config';
 import {
     BRAZILIAN_PORTUGUESE_ASSET_REPLACEMENTS,
     BRAZILIAN_PORTUGUESE_LEVELS_HOME_TEXT_REPLACEMENTS,
+    BRAZILIAN_PORTUGUESE_LEVELS_SRN_REPLACEMENTS,
     BRAZILIAN_PORTUGUESE_UI1_REPLACEMENTS,
     BRAZILIAN_PORTUGUESE_UI4_REPLACEMENTS,
+    SWF_RUNTIME_VERSION,
     buildDungeonBlitzSwfVariantBuffer,
+    buildPortugueseAssetSwfBuffer,
     buildPortugueseExactAssetSwfBuffer,
     buildPortugueseLevelsNrSwfBuffer,
     buildPortugueseUi1SwfBuffer,
@@ -65,7 +68,7 @@ export class StaticServer {
     private localizedAssetSwfCache: { key: string; buffer: Buffer } | null;
     private readonly discordAccountLinks: DiscordAccountLinkService;
     private readonly flashVersion = 'cbw';
-    private readonly gameVersion = 'cbv';
+    private readonly gameVersion = 'cbw';
 
     constructor(
         port: number = Config.STATIC_PORT,
@@ -96,7 +99,7 @@ export class StaticServer {
         const stats = fs.statSync(swfPath);
         const ptbrMainText = process.env.DB_PTBR_MAIN_SWF_TEXT === '1' ? 'on' : 'off';
         const ptbrEmotePatches = process.env.DB_PTBR_EMOTE_PATCHES === '0' ? 'off' : 'on';
-        const cacheKey = `${mode}:${locale}:${ptbrMainText}:${ptbrEmotePatches}:${swfPath}:${stats.mtimeMs}:${stats.size}`;
+        const cacheKey = `${mode}:${locale}:${ptbrMainText}:${ptbrEmotePatches}:${SWF_RUNTIME_VERSION}:${swfPath}:${stats.mtimeMs}:${stats.size}`;
         if (this.selectedSwfCache?.key === cacheKey) {
             return this.selectedSwfCache.buffer;
         }
@@ -114,7 +117,7 @@ export class StaticServer {
         const swfPath = path.join(this.contentDir, assetRelativePath);
         const stats = fs.statSync(swfPath);
         const shouldLocalizeAssets = process.env.DB_PTBR_LOCALIZED_ASSETS !== '0';
-        const cacheKey = `${locale}:${shouldLocalizeAssets ? 'assets-on' : 'assets-off'}:${swfPath}:${stats.mtimeMs}:${stats.size}`;
+        const cacheKey = `${locale}:${shouldLocalizeAssets ? 'assets-on' : 'assets-off'}:${SWF_RUNTIME_VERSION}:${swfPath}:${stats.mtimeMs}:${stats.size}`;
         if (this.localizedAssetSwfCache?.key === cacheKey) {
             return this.localizedAssetSwfCache.buffer;
         }
@@ -148,6 +151,9 @@ export class StaticServer {
             } else if (assetName === 'levelshome.swf') {
                 buffer = buildPortugueseExactAssetSwfBuffer(swfPath, BRAZILIAN_PORTUGUESE_LEVELS_HOME_TEXT_REPLACEMENTS);
                 console.log(`[StaticServer] Served ${assetRelativePath} for pt-br with localizedAssets=on (home exact dialogue strings patched).`);
+            } else if (assetName === 'levelssrn.swf') {
+                buffer = buildPortugueseAssetSwfBuffer(swfPath, BRAZILIAN_PORTUGUESE_LEVELS_SRN_REPLACEMENTS);
+                console.log(`[StaticServer] Served ${assetRelativePath} for pt-br with localizedAssets=on (BRM exact strings patched).`);
             } else {
                 buffer = fs.readFileSync(swfPath);
             }

@@ -794,9 +794,7 @@ export class CharacterHandler {
         const skinColor = br.readMethod20(24);
         const shirtColor = br.readMethod20(24);
         const pantColor = br.readMethod20(24);
-
         if (!client.userId) {
-            console.log(`[CharCreate] No userId for client`);
             return;
         }
 

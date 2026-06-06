@@ -35,9 +35,9 @@
     },
     "8": {
       "OfferText": "Com Fim do Lobo segura, podemos recuperar mais terras das mãos do mal.",
-      "ActiveText": "Graças a você, estamos de pé de novo e prontos para lutar!=@Fico feliz em ouvir isso. Pretendo acabar com os goblins deste lado do oceano.=@Seu povo vai me ajudar?=Claro! A família do Abbod é da região a leste daqui.=Ele está ansioso para recuperar o legado da família.=@Excelente. E preciso descobrir mais sobre as Terras Adormecidas.=Nunca ouvi falar delas.=Mas talvez haja algum registro nos arquivos da Cidadela de Wissen.=@Então, vou libertar a cidadela e também as terras de Abbod.=@Diga ao Abbod que vou encontrá-lo lá!=Pode deixar. Eu aviso assim que voltar à vila.",
-      "ReturnText": "Vamos fortificar nosso acampamento aqui. Obrigado por ter nos guiado.",
-      "PraiseText": "Esta vila será a primeira de muitas que vamos recuperar.=Temos muita luta difícil pela frente, mas vamos conseguir.=Toda esta terra já foi um campo verdejante.=Os goblins e a magia deles transformaram tudo em pântano.=@O que a magia fez, a magia pode desfazer.=@Juntos, vamos restaurar esta terra.=@Bom, pelo menos boa parte.=Boa parte já seria mais do que eu jamais esperei."
+      "ActiveText": "Graças a você, estamos de volta à ativa e prontos para lutar!=@Fico feliz em ouvir isso. Pretendo acabar com os goblins desse lado do oceano.=@Seu povo vai me ajudar?=Claro! A família de Abbod é da região a leste daqui.=Ele está ansioso para recuperar o legado da família.=@Excelente. E eu preciso descobrir mais sobre as Terras Adormecidas.=Nunca ouvi falar delas.=Mas talvez haja algum registro nos arquivos da Cidadela de Wissen.=@Então vou libertar a cidadela e também as terras de Abbod.=@Diga a Abbod que encontro ele lá!=Vou avisá-lo assim que voltar à vila, Campeão|Campeã.",
+      "ReturnText": "Vamos fortificar nosso acampamento aqui, herói|heroína. Obrigado por nos liderar.",
+      "PraiseText": "Essa vila será a primeira de várias que vamos recuperar.=@Temos muitas batalhas difíceis pela frente, mas vamos conseguir.=Toda essa terra já foi um campo verdejante.=Os goblins e sua magia transformaram o lugar em um pântano.=@O que foi feito com magia pode ser desfeito.=@Juntos, vamos restaurar essa terra.=@Bom, pelo menos boa parte dela.=Boa parte seria muito mais do que jamais imaginei."
     },
     "9": {
       "OfferText": "Os goblins roubaram todas as nossas ferraduras e transformaram em argolas de nariz.",
@@ -69,101 +69,101 @@
       "PraiseText": "Vou continuar lutando contra eles.=Mas nunca vou me acostumar com eles.=Nem com o cheiro deles.=Nem com as coisas sinistras que dizem.=Mas, principalmente, com o cheiro deles."
     },
     "15": {
-      "OfferText": "Alguns novo tipo de monstruoso guerreiro fica contra nos agora.",
-      "ActiveText": "Estes nao sao goblins nos estamos lutando.=@Nao gobins? O Que sao nos lidando com entao?=Alguns tipo de reptil-homens. Eles chamam eles mesmos Tuatara.=@Tuatara. Eu Ja leu nome em antigo historias. Fearsome soldados.=Aquele soa como eles, eles estao muito organizados.=Eles Tem tomado ha um torre proximo.=Nos nao pode obter passado eles.=@Eu pode obter passado eles.=Eu esperanca so.=@Me tambem. Apenas um caminho para encontrar fora.",
-      "ReturnText": "Voce mostrou Tuatara como humanos lutar!"
+      "OfferText": "Um novo tipo de guerreiro monstruoso se ergue contra nós agora.",
+      "ActiveText": "Não são goblins que estamos enfrentando.=@Não são goblins? Então com o que estamos lidando?=Uma espécie de homens-réptil. Eles se autodenominam Tuatara.=@Tuatara... Já li esse nome em contos antigos. Soldados temíveis.=Isso é típico deles, são muito organizados.=Eles tomaram uma torre aqui perto.=Não conseguimos passar por eles.=@Bom, eu consigo passar por eles.=Espero que sim.=@Eu também. Só há um jeito de descobrir.",
+      "ReturnText": "Você mostrou aos Tuataras como os humanos lutam!"
     },
     "16": {
-      "OfferText": "castelo de Lorde Yornak parece ainda habitado embora nao por homens.",
-      "ActiveText": "Castelo Yornak era lar de este de regiao lords.=ultimo Lorde e Dama Yornak construiu magnifico celeiro, palacio, e universidade.=@Eles eram renomados para deles riqueza e lavish spending, Eu saber.=de Fato eles eram, mas...=Eles sempre manteve deles antigo castelo em bom reparar.=Isso era deles seguro retreat.=@Talvez la sao alguns sobreviventes la tambem.=Ha alguem em la.=Alguem Tuatara chamam Yornak.=@Yornak! Talvez um heir? Eu Vou ir encontrar fora.",
-      "ReturnText": "Voce sobreviveu Castelo Yornak.",
-      "PraiseText": "Yornak familia e outro tragico conto.=@invasions de Terras Adormecidas tem corrompido tudo.=@Eu Estou feliz Eu finalmente trouxe eles paz."
+      "OfferText": "O castelo do Lorde Yornak parece ainda estar habitado, embora não por humanos.",
+      "ActiveText": "O Castelo Yornak era o lar dos lordes desta região.=Os últimos Lorde e Dama Yornak construíram o magnífico celeiro, o palácio e a universidade.=@Sim, eles eram conhecidos por sua riqueza e gastos extravagantes, eu sei.=É verdade, mas…=Eles sempre mantiveram seu antigo castelo em bom estado.=Era o refúgio seguro deles.=@Talvez haja alguns sobreviventes por lá também, quem sabe.=Tem alguém lá dentro.=Alguém que os Tuatara chamam de Yornak.=@Yornak!? Será que é um herdeiro? Vou dar uma olhada.",
+      "ReturnText": "Você sobreviveu ao Castelo Yornak.",
+      "PraiseText": "A família Yornak é mais uma história trágica.=@As invasões das Terras Adormecidas corromperam tudo.=@Fico feliz por finalmente ter lhes trazido paz."
     },
     "17": {
-      "OfferText": "Ranger Affric tem liderou um grupo para scout antigo universidade distrito.",
-      "ActiveText": "Affric acha fonte de corrupcao e para leste.=Alguem chamado Hsalt tem montou acima em Cidadela de Wissen.=@Eu queria para poke ao redor la eu mesmo.=@Eu Vou ir ver o que ele tem descobriu.=Ser cuidadoso, estrada e overrung com Tuatara e Devoradores.",
-      "ReturnText": "Isso Esta bom para ver voce novamente, amigo.",
-      "PraiseText": "Seu legend cresce.=Logo este regiao vai seguir voce qualquer lugar."
+      "OfferText": "O Patrulheiro Affric liderou um grupo para explorar o antigo bairro universitário.",
+      "ActiveText": "Affric acredita que a origem da corrupção está a leste.=Alguém chamado Hsalt se estabeleceu na Cidadela de Wissen.=@Eu mesmo|mesma queria dar uma olhada por lá.=@Vou dar uma olhada no que ele descobriu.=Cuidado, a estrada está infestada de Tuatara e Devoradores.",
+      "ReturnText": "Que bom te ver de novo, amigo|amiga.",
+      "PraiseText": "Sua lenda segue crescendo.=Em breve, essa região irá acompanhá-lo|acompanhá-la em qualquer lugar."
     },
     "18": {
-      "OfferText": "Vizir de Tuatara e criando carnisaurs.",
-      "ActiveText": "Vizir pode trabalho para dragao generais...=Mas nos agora saber ele esta real poder por tras corrupcao.=de vizir magico experimentos sao criando carnasaurs.=@Aqueles lagarto-horse coisas?=Ele Esta criando eles para servir como montarias para Tuatara soldados.=@Eles Iriam ser mais que um match para nosso cavaleiros volta lar.=@Eu precisa para fim este monstro-criando program agora.",
-      "ReturnText": "Voce fez isso! Nenhum carnasaur cavaleiros vai atormentar nos."
+      "OfferText": "O Vizir dos Tuatara está criando carnissauros.",
+      "ActiveText": "O Vizir pode estar trabalhando para os generais dragões...=Mas agora sabemos que ele é quem realmente está por trás da corrupção.=Os experimentos mágicos do Vizir estão criando carnissauros.=@Aquelas coisas meio lagarto, meio cavalo?=Ele está criando essas criaturas para servirem de montaria para os soldados Tuatara.=@Elas dariam muito trabalho até para os cavaleiros da terra natal.=@Preciso acabar com esse programa de criação de monstros agora mesmo.",
+      "ReturnText": "Você conseguiu! Nenhum cavaleiro montado em carnissauro vai nos atormentar."
     },
     "19": {
-      "OfferText": "Vizir Hsalt e usando de cidadela biblioteca para mal",
-      "ActiveText": "Vizir vai ser incrivelmente irado at voce.=@Eu Estou mesmo mais irado at ele.=@Ele Esta perverteu de cidadela sabedoria para mal.=Eu suponho voce esta indo depois ele.=@Eu sou. Eu Estou tomando volta biblioteca para todos de nos.=Ser cuidadoso, de vizir magia faz ele como perigoso como dragoes ele serves.",
-      "ReturnText": "biblioteca e liberated!"
+      "OfferText": "O Vizir Hsalt está usando a biblioteca da Cidadela para fins malignos.",
+      "ActiveText": "O Vizir vai ficar furioso com você.=@E eu estou ainda mais furioso|furiosa com ele.=@Ele corrompeu a sabedoria da Cidadela para fins malignos.=Imagino que você vai atrás dele.=@E você acertou. Vou retomar a biblioteca para todos nós.=Tenha cuidado. A magia do Vizir o torna tão perigoso quanto os dragões a quem ele serve.",
+      "ReturnText": "A biblioteca foi libertada!"
     },
     "20": {
-      "OfferText": "Tuatara general tem montou acima dele base em castelo proximo",
-      "ActiveText": "Tuatara General, Svar, e based em aquele antigo castelo.=@Este Svar parece para ser um de deles importante lideres.=@Eu Estou indo para tomar ele em e aprender onde estes reptilian soldados vir de.=O Que e um exercito fazendo em este pantano mesmo assim?=@Eu Estou nao certo, mas exercitos nao ficar em um lugar.=@Exercitos este grande sao para attacking outros.=Como nearest outro, isso e worrisome para me.",
-      "ReturnText": "General Svar era um dragao!",
-      "PraiseText": "Tuatara sao liderou por real, viver dragoes.=@Eles sao, qual nao e bom noticias.=Aquele significa la sao mais dragoes.=@Provavelmente maiores uns tambem.=Bom sorte com aquele.=Feliz isso esta nao me em seu boots."
+      "OfferText": "O general Tuatara estabeleceu sua base no castelo nas proximidades.",
+      "ActiveText": "O General Tuatara, Svar, está naquele antigo castelo.=@Esse Svar parece ser um dos líderes importantes deles.=@Vou enfrentá-lo e descobrir de onde vêm esses soldados reptilianos.=Afinal, o que um exército está fazendo nesse pântano?=@Não tenho certeza, mas exércitos não ficam parados em um lugar só.=@Exércitos desse tamanho existem para atacar alguém.=E, sendo o alvo mais próximo, isso me preocupa.",
+      "ReturnText": "O General Svar era um dragão!",
+      "PraiseText": "Os Tuatara são liderados por dragões de verdade, vivos.=@Isso mesmo, bem vivos, o que não é uma boa notícia.=Isso quer dizer que existem mais dragões.=@Provavelmente maiores também.=Boa sorte com isso, vai precisar.=Ainda bem que eu não sou você."
     },
     "21": {
-      "OfferText": "Gehrin e Odem acho eles saber onde Tuatara General e.",
-      "ActiveText": "Nos tem mais soldados scouting brejo.=Gehrin e Odem acho eles saber onde outro Tuatara general e.=@Outro dragao?=Provavelmente.=Ir ver eles, eles saber mais que Eu.",
-      "ReturnText": "Feliz voce poderia fazer isso.",
-      "PraiseText": "de Tuatara outro general e proximo.=Mas ele esta diferente que Svath.=@Diferente como?=Nos visto sinais de mortos-vivos em dele servico.=@Grande. Eu sense de Nephit mao em este."
+      "OfferText": "Gehrin e Odem acham que sabem onde está o General Tuatara.",
+      "ActiveText": "Temos mais soldados explorando o pântano.=Gehrin e Odem acham que sabem onde está o outro general Tuatara.=@Outro dragão? Fala sério.=Provavelmente.=Vá falar com eles, eles sabem mais do que eu.",
+      "ReturnText": "Que bom que você pôde vir.",
+      "PraiseText": "O outro general dos Tuatara está por perto.=Mas ele é diferente do Svath.=@Diferente em que sentido?=Vimos sinais de mortos-vivos a serviço dele.=@Que ótimo. Sinto que Nephit está por trás disso."
     },
     "22": {
-      "OfferText": "Ha outro General, chamado Svath. Ele Esta em antigo palacio.",
-      "ActiveText": "General Svath comanda todos estes Tuatara.=@Svath e Svar? Eles deve ser irmaos.=Provavelmente so, mas este soa como grande irmao.=e Svath nao apenas comandar Tuatara soldados.=Ele Esta para dentro scarier coisas.=@Voce significa besides giant aranhas e carnivorous plantas?=Eu significa como mortos-vivos.=@Grande, outro tumulo digger como Nephit.=@Um invasao de dragoes e fantasmas iria ruina de qualquer um week.",
-      "ReturnText": "Voce parado dragao invasao em dele tracks!"
+      "OfferText": "Há outro General, chamado Svath. Ele está no antigo palácio.",
+      "ActiveText": "O General Svath comanda todos esses Tuatara.=@Svath e Svar? Eles devem ser irmãos.=Provavelmente, mas esse parece ser o irmão mais velho.=E Svath não comanda apenas soldados Tuatara.=Ele mexe com coisas mais assustadoras.=@Quer dizer, além de aranhas gigantes e plantas carnívoras?=Quero dizer, assustadoras tipo mortos-vivos.=@Ótimo, mais um coveiro como Nephit.=@Uma invasão de dragões e fantasmas estragaria a semana de qualquer um.",
+      "ReturnText": "Você conseguiu deter a invasão dos dragões!"
     },
     "23": {
-      "OfferText": "O Que e proximo para voce,#tn#?",
-      "ActiveText": "Agora aquele Tuatara sao derrotado...=O Que e seu plano?=@Eu Estou indo para seguir para Castelo Hocke.=@Eu Estou certo isso esta todos monstros e ruinas agora.=Eu nao pode imagine qualquer um sobreviveu Tuatara Legiao passing atraves.=@e Nephit e nenhum duvida acima para algo.=@Eu precisa para obter para dentro aquele castelo...=@Se Eu Estou sempre indo para aprender verdade sobre onde estes monstros vir de.",
-      "ReturnText": "Segurar la, stanger. Quem sao voce?",
-      "PraiseText": "Voce fez alguns tremendous changes em estes parts."
+      "OfferText": "Qual será seu próximo passo, #tn#?",
+      "ActiveText": "Agora que os Tuatara foram derrotados...=Qual é o seu plano?=@Vou seguir para o Castelo Hocke.=@Tenho certeza de que agora só restam monstros e ruínas por lá.=Não consigo imaginar que alguém tenha sobrevivido à passagem da Legião Tuatara.=@E aquele coveiro, Nephit, sem dúvida, está tramando alguma coisa.=@Preciso entrar naquele castelo...=@Se eu quiser descobrir de onde esses monstros realmente vêm.",
+      "ReturnText": "Espere aí, estranho. Quem é você?",
+      "PraiseText": "Você fez mudanças incríveis por aqui."
     },
     "24": {
-      "OfferText": "ruinas de Real Celeiro e fonte de devoradores.",
-      "ActiveText": "Real Celeiro usado para ser um maravilha de mundo.=@Este inteiro regiao era celeiro de imperio.=Mas agora arruinado celeiro e corrompido.=devoradores parecem para todos vir de la.=@Entao weeding eles fora vai ser meu proximo task.=Se nos pode recuperar grain campos, nos pode apoio um inteiro exercito.=@Eu apenas precisa para cortar abaixo um exercito de killer plantas primeiro.",
-      "ReturnText": "Voce limpou Real Celeiro!"
+      "OfferText": "As ruínas do Celeiro Real são a origem dos Devoradores.",
+      "ActiveText": "O Celeiro Real já foi uma das maravilhas do mundo.=@Toda essa região era o celeiro do império.=Mas agora o celeiro está em ruínas e corrompido.=Parece que todos os Devoradores vêm de lá.=@Então, minha próxima tarefa será arrancá-los pela raiz.=Se conseguirmos recuperar os campos de grãos, poderemos sustentar um exército inteiro.=@Só preciso acabar com um exército de plantas assassinas primeiro.",
+      "ReturnText": "Você limpou o Celeiro Real!"
     },
     "25": {
-      "OfferText": "Aqueles lagartos colocar um muito de stock em aqueles estandartes",
-      "ActiveText": "Tuatara reunem ao redor deles guerra estandartes.=Eles Estao ferozes quando deles estandarte e acima.=@e mais organizados que goblins sempre eram.=estandartes sao encantado em alguns caminho.=Se voce capture alguns de eles, Eu pode ser capaz para uso deles magia contra eles.=@Nos poderia uso nosso proprio magia estandartes para retake terra!",
-      "ReturnText": "Perfect. Eu acho Eu pode sew nosso proprio encantado estandartes agora.",
-      "PraiseText": "Agora Eu apenas precisa um bom desenho.=@Se voce querer para uso meu retrato, voce pode.=Um, obrigado, Eu Vou considerar isso.=@Eu tem um inspirador perfil.=Uh, voce fazer?=Sim, bem, Eu Vou vir acima com um poucos options."
+      "OfferText": "Esses lagartos dão muita importância a esses estandartes.",
+      "ActiveText": "Os Tuatara se reúnem em torno de seus estandartes de guerra.=Eles ficam ferozes quando hasteiam o estandarte.=@E mais organizados do que os goblins jamais foram.=Os estandartes estão, de alguma forma, encantados.=Se você capturar alguns deles, talvez eu consiga usar a magia deles contra eles.=@Poderíamos usar nossos próprios estandartes mágicos para reconquistar o território!",
+      "ReturnText": "Perfeito. Acho que agora consigo costurar nossos próprios estandartes encantados.",
+      "PraiseText": "Agora só preciso de um bom design.=@Se quiser usar um lindo retrato meu, fique à vontade.=Hm, obrigado, vou pensar melhor nisso.=@Tenho um perfil bem inspirador, sabe?=Ah, é mesmo?=Sim... Bom, vou pensar em algumas opções."
     },
     "26": {
-      "OfferText": "Um Tuatara squad tem montou acima em um abandonado fazenda.",
-      "ActiveText": "lagartos tomou ha este antigo casa.=Eles Estao usando isso como um base para lancar ataques de.=Eles loja suprimentos la tambem.=Principalmente secos besouros e rancida carne.=So voce pode talvez sair aquele la.=Unless voce esta para dentro aquele tipo de comida.=Eu Estou nao judging.",
-      "ReturnText": "Agradecer voce!",
-      "PraiseText": "Nos Vamos fortaleza um olho em aquele lugar.=Se qualquer mais mostrar acima, nos vamos tomar cuidar de eles.=Obrigado para nao bringing me secos besouros.=Embora meu cousin diz eles estao tasty.=Eu acho Eu deveria tentar um antes Eu judge."
+      "OfferText": "Um grupo de Tuatara se instalou em uma fazenda abandonada.",
+      "ActiveText": "Os lagartos tomaram conta dessa velha casa.=Estão usando ela como base para lançar ataques.=Eles também guardam suprimentos lá.=Principalmente besouros secos e carne rançosa.=Então, talvez você possa deixar isso lá.=Bom... a menos que você goste desse tipo de comida.=Sem julgamentos, claro.",
+      "ReturnText": "Obrigado!",
+      "PraiseText": "Vamos ficar de olho naquele lugar.=Se aparecerem mais, nós cuidamos deles.=Obrigado por não ter me trazido os besouros secos.=Embora meu primo diga que são gostosos.=Acho que devo experimentar antes de julgar."
     },
     "27": {
-      "OfferText": "Devoradores sao por toda parte! Eu nao pode obter para bem",
-      "ActiveText": "Pode voce obter devoradores embora de bem?=Isso Esta apenas fonte de fresco agua qualquer lugar perto aqui.=Estes monstro tem corrompido rio.=e lagoas.=Eles Iriam corromper chuva se eles poderia.",
-      "ReturnText": "Whew, obrigado!",
-      "PraiseText": "Obrigado para clearing bem.=Nos realmente precisa um reliable agua fonte."
+      "OfferText": "Os Devoradores estão por toda parte! Não consigo chegar ao poço.",
+      "ActiveText": "Você consegue afastar os devoradores do poço?=É a única fonte de água potável nas redondezas.=Esses monstros corromperam o rio.=E os lagos também.=Corromperiam até a chuva se pudessem.",
+      "ReturnText": "Ufa, obrigada!",
+      "PraiseText": "Obrigada por limpar o poço.=Precisamos urgentemente de uma fonte de água confiável."
     },
     "28": {
-      "OfferText": "Ha algo grande acima em aquele antigo fazenda.",
-      "ActiveText": "Eu nao saber o que isso e.=Eu nao acho isso esta Tuatara embora.=Eu figured voce iria querer para verificar isso fora.=Porque Eu realmente nao querer para.=Fez Eu mention isso sounded grande?",
-      "ReturnText": "Ooo! Eu odeio aranhas! Obrigado!",
-      "PraiseText": "Um colossal aranha, isso era?=Eu odeio aranhas.=Eu Estou feliz isso era voce e nao me!"
+      "OfferText": "Tem algo grande naquela velha fazenda.",
+      "ActiveText": "Eu não sei o que é.=Mas não acho que sejam os Tuatara.=Imaginei que você gostaria de dar uma olhada.=Porque eu realmente não quero.=Eu já disse que parecia ser algo grande?",
+      "ReturnText": "Eca! Detesto aranhas! Obrigado!",
+      "PraiseText": "Era uma aranha gigantesca, não era?=Eu detesto aranhas.=Que bom que foi você e não eu!"
     },
     "29": {
-      "OfferText": "Estes murderous plantas sao intriguing.",
-      "ActiveText": "Nos precisa para aprender mais sobre Devoradores.=@Eu destruiu fonte de aqueles vil plantas.=Sim, mas eles crescem como ervas daninhas.=Se nos estamos indo para curar terra, Eu para saber mais.=Coletar dentes de grande uns.=Eu pode uso eles para concoct um potion para veneno eles.=@Eu acho nos iriamos todos ser melhor afastado se plantas nao tem dentes.",
-      "ReturnText": "Bem feito, agradecer voce!",
-      "PraiseText": "Eu odeio para acho o que Hsalt fez para dar plantas dentes.=Isso Esta terrivel para contemplar.=Mas isso esta todos Eu pode acho sobre.=O Que mais fez ele dar dentes para?=Cogumelos?=Descricao em Portugues 4D97D8.=Descricao em Portugues DB7932."
+      "OfferText": "Essas plantas assassinas são intrigantes.",
+      "ActiveText": "Precisamos aprender mais sobre os Devoradores.=@Eu destruí a origem dessas plantas malditas.=Sim, mas elas crescem como ervas-daninhas.=Se quisermos recuperar a terra, preciso saber mais.=Colete os dentes dos maiores.=Posso usá-los para preparar uma poção e envenená-los.=@Acho que seria melhor para todos nós se essas plantas não tivessem dentes.",
+      "ReturnText": "Muito bem, obrigado!",
+      "PraiseText": "Nem quero imaginar o que o Hsalt fez para dar dentes às plantas.=É aterrorizante só de imaginar.=Mas é só nisso que consigo pensar.=Para o que mais ele deu dentes?=Cogumelos?=Águas-vivas?=Pedras?"
     },
     "30": {
-      "OfferText": "Vai voce ajudar nos empurrar volta Tuatara soldados?",
-      "ActiveText": "Trazer me Elmos de Tuatara Commanders.=@Por Que fazer voce querer deles elmos?=Primeiro, para mostrar eles nos estamos tomando ha. Eles amam deles elmos.=Segundo, nos pode uso metal para forja nosso proprio armadura.=@Third, isso vai fazer eles so irado.=Descricao em Portugues DE04E0.",
-      "ReturnText": "Agradecer voce! Aqueles lagartos saber nos estamos nao fooling ao redor agora!",
-      "PraiseText": "Um real herói em nosso lado!=Talvez nos pode tomar lutar para estes beasties.=e nao apenas Tuatara.=Imagine este terra gratis de monstro dominio!"
+      "OfferText": "Você nos ajudaria a repelir os soldados Tuatara?",
+      "ActiveText": "Traga-me os elmos dos Comandantes Tuatara.=@Hmm... e por que você quer os elmos deles mesmo?=Primeiro, para mostrar a eles que estamos assumindo o comando. Eles adoram seus elmos.=E segundo, podemos usar o metal para forjar nossa própria armadura.=@E em terceiro lugar, isso vai deixar eles furiosos!=Bingo! Exatamente.",
+      "ReturnText": "Obrigado! Agora esses lagartos sabem que não estamos brincando!",
+      "PraiseText": "É bom ter um|uma verdadeiro|verdadeira herói|heroína ao nosso lado!=Talvez possamos levar a luta até essas bestas.=E não só os Tuatara.=Imagine essa terra livre do domínio dos monstros!"
     },
     "31": {
-      "OfferText": "Meu antidoto para aranha veneno precisa aranha presas",
-      "ActiveText": "Se voce trazer me aranha presas, Eu Iria ser capaz para fazer um antidoto.=@Aquele iria definitely vir em util.=Estes grande aranhas nao usado para viver aqui.=@Eles eram corrompido por alguns vil magia.=Isso e por que Eu odeio magia, sempre corrompendo coisas.=Eu muito prefer alchemy.",
-      "ReturnText": "Agradecer voce, agora Eu pode terminar antidoto",
-      "PraiseText": "Isso vai tomar anos para obter livrar de estes aranhas.=Se nos pode sempre figure fora onde eles vir de."
+      "OfferText": "Meu antídoto contra o veneno de aranha precisa de presas de aranha.",
+      "ActiveText": "Se você me trouxer presas de aranha, eu conseguiria preparar um antídoto.=@Interessante, isso com certeza seria muito útil.=Essas aranhas grandes não costumavam morar aqui.=@Elas foram corrompidas por uma magia nefasta.=É por isso que eu odeio magia, sempre corrompendo tudo.=Eu prefiro muito mais a alquimia.",
+      "ReturnText": "Obrigada, graças a você agora posso terminar o antídoto.",
+      "PraiseText": "Apesar de que vai levar alguns anos para nos livrarmos dessas aranhas.=Se é que algum dia conseguiremos descobrir de onde elas vêm."
     },
     "32": {
       "OfferText": "Nos Estamos sabio para seu de tipo tricks. Present voce mesmo para Guardiao ou taste steel.",
@@ -632,7 +632,7 @@
       "OfferText": "Aqueles lagartos colocar um muito de stock em aqueles estandartes",
       "ActiveText": "Tuatara reunem ao redor deles guerra estandartes.=Eles Estao ferozes quando deles estandarte e acima.=@e mais organizados que goblins sempre eram.=estandartes sao encantado em alguns caminho.=Se voce capture alguns de eles, Eu pode ser capaz para uso deles magia contra eles.=@Nos poderia uso nosso proprio magia estandartes para retake terra!",
       "ReturnText": "Perfect. Eu acho Eu pode sew nosso proprio encantado estandartes agora.",
-      "PraiseText": "Agora Eu apenas precisa um bom desenho.=@Se voce querer para uso meu retrato, voce pode.=Um, obrigado, Eu Vou considerar isso.=@Eu realmente tem um inspirador perfil.=Uh, voce fazer?=Sim, bem, Eu Vou vir acima com um poucos options."
+      "PraiseText": "Agora Eu apenas precisa um bom desenho.=@Se voce querer para uso meu retrato, voce pode.=Hm, obrigado, vou pensar melhor nisso.=@Eu realmente tem um inspirador perfil.=Uh, voce fazer?=Sim, bem, Eu Vou vir acima com um poucos options."
     },
     "136": {
       "OfferText": "Um Tuatara squad tem montou acima em um abandonado fazenda.",

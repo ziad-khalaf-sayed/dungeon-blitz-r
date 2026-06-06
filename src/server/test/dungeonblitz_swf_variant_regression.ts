@@ -2,7 +2,12 @@ import { strict as assert } from 'assert';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { buildDungeonBlitzSwfVariantBuffer, SWF_RUNTIME_VERSION } from '../core/DungeonBlitzSwf';
+import {
+    BRAZILIAN_PORTUGUESE_UI4_REPLACEMENTS,
+    buildDungeonBlitzSwfVariantBuffer,
+    buildPortugueseUi4SwfBuffer,
+    SWF_RUNTIME_VERSION
+} from '../core/DungeonBlitzSwf';
 import { Config } from '../core/config';
 import {
     classIndexByName,
@@ -26,6 +31,7 @@ function resolveBaseSwfPath(): string {
 }
 
 const BASE_SWF_PATH = resolveBaseSwfPath();
+const UI4_SWF_PATH = path.resolve(path.dirname(BASE_SWF_PATH), 'UI_4.swf');
 const MULTIPLAYER_HOST = Config.MULTIPLAYER_HOST;
 const LOCAL_REFRESH_URL = 'http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw';
 const LOCAL_PORTUGUESE_REFRESH_URL = 'http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=pt-br';
@@ -748,8 +754,7 @@ function testLocalVariantUsesLocalhostAndPort8000(): void {
         assert.equal(getStringMatchCount(tempPath, 'localhost'), 1);
         assert.equal(getStringMatchCount(tempPath, ':8000/p/'), 1);
         assert.equal(getStringMatchCount(tempPath, LOCAL_REFRESH_URL), 1);
-        assert.equal(getStringMatchCount(tempPath, '/lang:ptbr'), 1);
-        assert.equal(getStringMatchCount(tempPath, '/lang:br'), 1);
+        assert.equal(getStringMatchCount(tempPath, '/lang:'), 1);
         assert.equal(getStringMatchCount(tempPath, LEGACY_REFRESH_URL), 0);
         assert.equal(getStringMatchCount(tempPath, MULTIPLAYER_HOST), 0);
         assert.equal(getStringMatchCount(tempPath, '/p/'), 0);
@@ -911,7 +916,10 @@ function testPortugueseVariantAddsLocalizedEmoteMenuAndAliases(): void {
     const portugueseBuffer = buildDungeonBlitzSwfVariantBuffer(BASE_SWF_PATH, 'local', 'pt-br');
     withTempSwf(portugueseBuffer, (tempPath) => {
         assert.equal(getStringMatchCount(tempPath, LOCAL_PORTUGUESE_REFRESH_URL), 1);
-        assert.equal(getStringMatchCount(tempPath, `UI_1.swf?rv=${SWF_RUNTIME_VERSION}`), 1);
+        assert.equal(getStringMatchCount(tempPath, `UI_1.swf?rv=${SWF_RUNTIME_VERSION}`), 0);
+        assert.equal(getStringMatchCount(tempPath, `UI_2.swf?rv=${SWF_RUNTIME_VERSION}`), 0);
+        assert.equal(getStringMatchCount(tempPath, 'UI_1.swf') >= 1, true);
+        assert.equal(getStringMatchCount(tempPath, 'UI_2.swf') >= 1, true);
         assertInstanceMethodBranchesTargetInstructions(tempPath, 'class_127', 'method_1237');
         assertInstanceMethodBranchesTargetInstructions(tempPath, 'class_127', 'method_1260');
         const { abc, instructions } = getInstanceMethodCode(tempPath, 'class_127', 'method_1260');
@@ -967,6 +975,176 @@ function testPortugueseVariantAddsLocalizedEmoteMenuAndAliases(): void {
     });
 }
 
+function testPortugueseVariantLocalizesDisciplineScreenLabelsOnly(): void {
+    const portugueseBuffer = buildDungeonBlitzSwfVariantBuffer(BASE_SWF_PATH, 'local', 'pt-br');
+    withTempSwf(portugueseBuffer, (tempPath) => {
+        const ctx = parseSwf(tempPath);
+        const abc = parseAbc(ctx);
+        const expectedLabels = [
+            { methodIdx: 1054, offset: 287, label: 'Truques do Ofício' },
+            { methodIdx: 1054, offset: 290, label: 'Emboscada e Investida' },
+            { methodIdx: 1054, offset: 293, label: 'Das Sombras' },
+            { methodIdx: 1054, offset: 296, label: 'Artes Negras' },
+            { methodIdx: 1054, offset: 299, label: 'Maestrias da Disciplina' },
+            { methodIdx: 1054, offset: 337, label: 'Maestrias da Disciplina' }
+        ];
+
+        for (const { methodIdx, offset, label } of expectedLabels) {
+            const methodBody = abc.methodBodies.get(methodIdx);
+            assert.ok(methodBody, `DungeonBlitz.swf method ${methodIdx} body not found`);
+            const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
+            const instructions = new Map(disassemble(code, `m${methodIdx}`).map((instruction) => [instruction.offset, instruction]));
+            const instruction = instructions.get(offset);
+            assert.equal(instruction?.opcode, 0x2c, `method ${methodIdx} offset ${offset} should remain a pushstring`);
+            const stringIndex = instruction!.operands[0]?.[1] ?? 0;
+            assert.equal(abc.stringValues[stringIndex], label);
+        }
+
+        for (const internalName of ['Viperblade', 'Shadowstalker', 'Soulthief']) {
+            assert.ok(
+                abc.stringValues.includes(internalName),
+                `PT-BR discipline screen patch must keep discipline name ${internalName} in English`
+            );
+        }
+
+        const englishDisciplineLabels = [
+            { offset: 781, label: 'Viperblade' },
+            { offset: 784, label: 'Shadowstalker' },
+            { offset: 787, label: 'Soulthief' }
+        ];
+        const masteryBody = abc.methodBodies.get(1150);
+        assert.ok(masteryBody, 'DungeonBlitz.swf method 1150 body not found');
+        const masteryCode = ctx.body.subarray(masteryBody.codeStart, masteryBody.codeStart + masteryBody.codeLen);
+        const masteryInstructions = new Map(disassemble(masteryCode, 'm1150').map((instruction) => [instruction.offset, instruction]));
+        for (const { offset, label } of englishDisciplineLabels) {
+            const instruction = masteryInstructions.get(offset);
+            assert.equal(instruction?.opcode, 0x2c, `method 1150 offset ${offset} should remain a pushstring`);
+            const stringIndex = instruction!.operands[0]?.[1] ?? 0;
+            assert.equal(abc.stringValues[stringIndex], label);
+        }
+    });
+}
+
+function testPortugueseVariantLocalizesDynamicUpgradeRequirementParts(): void {
+    const portugueseBuffer = buildDungeonBlitzSwfVariantBuffer(BASE_SWF_PATH, 'local', 'pt-br');
+    withTempSwf(portugueseBuffer, (tempPath) => {
+        const ctx = parseSwf(tempPath);
+        const abc = parseAbc(ctx);
+        assert.equal(abc.stringValues.includes('É necessário nível '), true);
+        assert.equal(abc.stringValues.includes(' para melhorar'), true);
+        assert.equal(abc.stringValues.includes('Requisitos: '), true);
+        assert.equal(abc.stringValues.includes('Requisitos: Tomo Nível '), true);
+        assert.equal(abc.stringValues.includes(' Nível '), true);
+        assert.equal(abc.stringValues.includes(' Nível'), true);
+        assert.equal(abc.stringValues.includes('Você abandonou toda a segurança em nome da Morte Pura; conhece o golpe perfeito, o veneno incurável e o corte oculto que condena seu inimigo escolhido à aniquilação certa.'), true);
+        assert.equal(abc.stringValues.includes('Você se sacrificou à Corte das Sombras, tornando-se um ladino mortal que ataca à distância, aparece em todos os lugares ao mesmo tempo e aterroriza os inimigos vindo das trevas.'), true);
+        assert.equal(abc.stringValues.includes('Você dominou as heresias do Codex Carnifex; sabe que a verdadeira dor advém da morte da alma e que a verdadeira vitória consiste em tomar a força vital do inimigo como sua recompensa sombria.'), true);
+        assert.equal(abc.stringValues.includes('Selecione uma Receita'), true);
+        assert.equal(abc.stringValues.includes('Nível da Receita: '), true);
+        assert.equal(abc.stringValues.includes('Fornalha'), true);
+        assert.equal(abc.stringValues.includes('Reduz o tempo necessário para criar uma gema'), true);
+        assert.equal(abc.stringValues.includes('Bigorna'), true);
+        assert.equal(abc.stringValues.includes('Aumenta sua chance de criar uma gema rara ou lendária'), true);
+        assert.equal(abc.stringValues.includes('Martelo'), true);
+        assert.equal(abc.stringValues.includes('Reduz materiais necessários para obter bônus'), true);
+        assert.equal(abc.stringValues.includes('Fole'), true);
+        assert.equal(abc.stringValues.includes('Aumenta o número total de materiais para cada gema'), true);
+        assert.equal(abc.stringValues.includes('Carvões'), true);
+        assert.equal(abc.stringValues.includes('Acelera o ganho de experiência de criação'), true);
+        assert.equal(abc.stringValues.includes('Nível atual: '), true);
+        assert.equal(abc.stringValues.includes('Próximo nível: '), true);
+        assert.equal(abc.stringValues.includes('Treinar Pet'), true);
+        assert.equal(abc.stringValues.includes('Chocar Ovo'), true);
+        assert.equal(abc.stringValues.includes('Requisitos: Incubadora Nível '), true);
+        assert.equal(abc.stringValues.includes('Chocar - '), true);
+        assert.equal(abc.stringValues.includes('Chocando - '), true);
+        assert.equal(abc.stringValues.includes('Ponto de Talento - '), true);
+        assert.equal(abc.stringValues.includes('Crafting Materials'), true);
+        assert.equal(abc.stringValues.includes('Não é possível melhorar treinando habilidade'), true);
+        assert.equal(abc.stringValues.includes('Não é possível melhorar treinando Ponto'), true);
+        assert.equal(abc.stringValues.includes('Bônus da Forja'), true);
+        assert.equal(abc.stringValues.includes('Charm'), true);
+        assert.equal(abc.stringValues.includes('Não é possível melhorar criando uma Gema'), true);
+        assert.equal(abc.stringValues.includes('Não é possível melhorar treinando um pet'), true);
+        assert.equal(abc.stringValues.includes('Não é possível melhorar chocando um ovo'), true);
+        assert.equal(abc.stringValues.includes('Pontos de Artesão livres'), true);
+        assert.equal(abc.stringValues.includes('Artesão'), true);
+        assert.equal(abc.stringValues.includes('Ver Materiais'), true);
+        assert.equal(abc.stringValues.includes('Must be level '), false);
+        assert.equal(abc.stringValues.includes(' to upgrade'), false);
+        assert.equal(abc.stringValues.includes('Select a Recipe'), false);
+        assert.equal(abc.stringValues.includes('Recipe Level: '), false);
+        assert.equal(abc.stringValues.includes('Decreases the time it takes to craft a charm'), false);
+        assert.equal(abc.stringValues.includes('Increases your chance to craft a rare or legendary charm'), false);
+        assert.equal(abc.stringValues.includes('Decreases material required to gain craft bonuses'), false);
+        assert.equal(abc.stringValues.includes('Increases the total number of materials for each charm'), false);
+        assert.equal(abc.stringValues.includes('Increases the speed that craft experience is gained'), false);
+        assert.equal(abc.stringValues.includes('Talent Point - '), false);
+        assert.equal(abc.stringValues.includes('Cannot upgrade while training a Talent Point'), false);
+        assert.equal(abc.stringValues.includes('Cannot upgrade while training an Ability'), false);
+        assert.equal(abc.stringValues.includes('Cannot upgrade while crafting a Charm'), false);
+        assert.equal(abc.stringValues.includes('Cannot upgrade while training a pet'), false);
+        assert.equal(abc.stringValues.includes('Cannot upgrade while hatching an egg'), false);
+        assert.equal(abc.stringValues.includes('You have unspent Artisan Points'), false);
+        assert.equal(abc.stringValues.includes('Artisan Points'), false);
+        assert.equal(abc.stringValues.includes('Artisan Skills'), false);
+        assert.equal(abc.stringValues.includes('View Materials'), false);
+    });
+}
+
+function testPortugueseUi4LocalizesDisciplineScreenText(): void {
+    const buffer = buildPortugueseUi4SwfBuffer(UI4_SWF_PATH, BRAZILIAN_PORTUGUESE_UI4_REPLACEMENTS);
+    withTempSwf(buffer, (tempPath) => {
+        const ctx = parseSwf(tempPath);
+        assert.equal(ctx.body.includes(Buffer.from('Maestrias da Disciplina', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Selecione uma habilidade para aprimorá-la', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Talentos Treinados', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Treine Pontos de Talento extras abaixo', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Selecionar Disciplina', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Manter Disciplina', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Novos ovos em...', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Escolha pet ou ovo para treinar/chocar', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Treinar Pet', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Chocar Ovo', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Criando', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Materiais de Criação', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Loja de Símbolos de Prata', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Seus Símbolos:', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('OBTIDO', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Nível da Receita:', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Pontos de Artesão livres', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Nível Artesão', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('criar gemas melhores.', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Artesão', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Nível de Artesão', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Pontos de Artesão: ', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Fornalha', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Têmpera', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Martelo', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Fole', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Carvões', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Resetar', 'utf8')), true);
+        assert.equal(ctx.body.includes(Buffer.from('Select an ability on the left to upgrade', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Talents Trained', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Click below to train additional Talent Points', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Select Discipline', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Keep Discipline', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('New eggs in...', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Select a pet to train or egg to hatch', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Recipe Level:', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Crafting Materials', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Silver Sigil Store', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Your Silver Sigil:', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('OWNED', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('You have unspent Artisan Points', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Artisan Points: ', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Artisan Skills', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Tempering', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Hammering', 'utf8')), false);
+        assert.equal(ctx.body.includes(Buffer.from('Bellows', 'utf8')), false);
+    });
+}
+
 function main(): void {
     testLocalVariantUsesLocalhostAndPort8000();
     testMultiplayerVariantUsesRemoteHostAndDefaultAssetPath();
@@ -987,6 +1165,9 @@ function main(): void {
     testBaseAndLocalVariantKeepDungeonQuestHelperGuard();
     testLocalVariantNudgesDisconnectRefreshButton();
     testPortugueseVariantAddsLocalizedEmoteMenuAndAliases();
+    testPortugueseVariantLocalizesDisciplineScreenLabelsOnly();
+    testPortugueseVariantLocalizesDynamicUpgradeRequirementParts();
+    testPortugueseUi4LocalizesDisciplineScreenText();
     console.log('dungeonblitz_swf_variant_regression: ok');
 }
 

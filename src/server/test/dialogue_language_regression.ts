@@ -21,6 +21,7 @@ type FakeClient = {
     character: Character;
     characters: Character[];
     sentPackets: SentPacket[];
+    clientEntID: number;
     token?: number;
     currentLevel?: string;
     levelInstanceId?: string;
@@ -45,6 +46,7 @@ function createFakeClient(): FakeClient {
         character,
         characters: [character],
         sentPackets,
+        clientEntID: 1,
         entities: new Map(),
         send(id: number, payload: Buffer) {
             sentPackets.push({ id, payload: Buffer.from(payload) });
@@ -111,7 +113,7 @@ async function testLanguageCommandSwitchesToTurkishWithoutBroadcasting(): Promis
         'NPC dialog dili Turkce olarak ayarlandi.'
     );
     assert.ok(
-        getChatStatusTexts(client).includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbv&lang=tr'),
+        getChatStatusTexts(client).includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=tr'),
         'language command should ask the patched client to reload the Turkish SWF variant'
     );
     assert.ok(
@@ -135,13 +137,24 @@ async function testLanguageCommandSwitchesBackToEnglish(): Promise<void> {
         'NPC dialog language set to English.'
     );
     assert.ok(
-        getChatStatusTexts(client).includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbv&lang=en'),
+        getChatStatusTexts(client).includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=en'),
         'language command should ask the patched client to reload the English SWF variant'
     );
     assert.ok(
         getChatStatusTexts(client).includes('Language saved. In Adobe Flash Player, restart the game to apply everything.'),
         'language command should tell standalone Flash users to restart after saving the preference'
     );
+}
+
+async function testBackslashLanguageCommandAliasSwitchesBackToEnglish(): Promise<void> {
+    const client = createFakeClient();
+    client.character.dialogueLanguage = 'tr';
+
+    await SocialHandler.handlePublicChat(client as never, createPublicChatPacket('\\lang:en'));
+
+    assert.equal(client.character.dialogueLanguage, 'en');
+    assert.equal(client.sentPackets.some((packet) => packet.id === 0x2c), false);
+    assert.ok(getChatStatusTexts(client).includes('NPC dialog language set to English.'));
 }
 
 async function testPortugueseLanguageCommandAliasesSwitchToBrazilianPortuguese(): Promise<void> {
@@ -151,6 +164,7 @@ async function testPortugueseLanguageCommandAliasesSwitchToBrazilianPortuguese()
         await SocialHandler.handlePublicChat(client as never, createPublicChatPacket(command));
 
         assert.equal(client.character.dialogueLanguage, 'pt-br');
+        assert.equal(client.sentPackets.some((packet) => packet.id === 0x2c), false, `${command} should not broadcast as public chat`);
         const statusTexts = getChatStatusTexts(client);
         assert.ok(statusTexts.includes('Dialogos de NPC definidos para Portugues do Brasil.'), `${command} should acknowledge the language switch`);
         assert.ok(
@@ -158,19 +172,21 @@ async function testPortugueseLanguageCommandAliasesSwitchToBrazilianPortuguese()
             `${command} should tell standalone Flash users to restart after saving the preference`
         );
         assert.ok(
-            statusTexts.includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbv&lang=pt-br'),
+            statusTexts.includes('DB_LOCALIZATION_RELOAD:http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=pt-br'),
             `${command} should request a hard reload with the current PT-BR SWF URL`
         );
     }
 }
 
-async function testPortuguesePortugalAliasIsNotAcceptedAsBrazilianPortuguese(): Promise<void> {
+async function testInvalidLanguageCommandIsNotBroadcast(): Promise<void> {
     const client = createFakeClient();
 
-    await SocialHandler.handlePublicChat(client as never, createPublicChatPacket('/lang:pt'));
+    await SocialHandler.handlePublicChat(client as never, createPublicChatPacket('/lang:klingon'));
 
     assert.equal(client.character.dialogueLanguage, 'en');
     assert.equal(getChatStatusTexts(client).some((text) => text.includes('DB_LOCALIZATION_RELOAD:')), false);
+    assert.equal(client.sentPackets.some((packet) => packet.id === 0x2c), false);
+    assert.ok(getChatStatusTexts(client).includes('Use /lang:en, /lang:tr ou /lang:ptbr.'));
 }
 
 function testTurkishDialogueFilesCoverAllSourceDialogue(): void {
@@ -738,6 +754,234 @@ function testBlackRoseMireLiveSkitSegmentsUseTranslations(): void {
     assert.deepEqual(thoughts.map((thought) => thought.text), liveSkitSegments.map(([, expected]) => expected));
 }
 
+function testPlayerRoomThoughtsRemapFromEnemyToPlayerEntity(): void {
+    const dataDir = path.resolve(__dirname, '../data');
+    DialogueTranslationLoader.load(dataDir);
+
+    const client = createFakeClient();
+    client.character.dialogueLanguage = 'pt-br';
+    client.token = 51012;
+    client.currentLevel = 'SRN_Mission4';
+    client.levelInstanceId = '';
+    client.playerSpawned = true;
+    client.clientEntID = 1;
+    client.entities.set(704, {
+        id: 704,
+        name: 'BlackRoseMireEnemy',
+        team: EntityTeam.ENEMY
+    });
+
+    GlobalState.sessionsByToken.set(client.token, client as never);
+    try {
+        SocialHandler.handleStartSkit(
+            client as never,
+            createStartSkitPacket(704, 'Hsalt is dead, you poor wretch.')
+        );
+        SocialHandler.handleStartSkit(
+            client as never,
+            createStartSkitPacket(704, "I wonder how long Hsalt's horrors will linger.")
+        );
+        SocialHandler.handleStartSkit(
+            client as never,
+            createStartSkitPacket(704, 'Hsssaaalt saaays nooo paaasss!')
+        );
+    } finally {
+        GlobalState.sessionsByToken.delete(client.token);
+    }
+
+    const thoughts = client.sentPackets
+        .filter((entry) => entry.id === 0x76)
+        .map((entry) => decodeRoomThought(entry.payload));
+
+    assert.deepEqual(thoughts, [
+        {
+            entityId: 1,
+            text: 'Hsalt está morto, seu pobre infeliz.'
+        },
+        {
+            entityId: 1,
+            text: 'Me pergunto por quanto tempo os horrores de Hsalt ainda vão assombrar esse lugar.'
+        },
+        {
+            entityId: 704,
+            text: 'Hsssaaalt diiiz que ninguém paaassa!'
+        }
+    ]);
+}
+
+function testLostAtSeaPlayerRoomThoughtsRemapFromEnemyToPlayerEntity(): void {
+    const dataDir = path.resolve(__dirname, '../data');
+    DialogueTranslationLoader.load(dataDir);
+
+    const client = createFakeClient();
+    client.character.dialogueLanguage = 'en';
+    client.token = 51013;
+    client.currentLevel = 'TutorialBoat';
+    client.levelInstanceId = '';
+    client.playerSpawned = true;
+    client.clientEntID = 1;
+    client.entities.set(705, {
+        id: 705,
+        name: 'TutorialBoatEnemy',
+        team: EntityTeam.ENEMY
+    });
+
+    GlobalState.sessionsByToken.set(client.token, client as never);
+    try {
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(705, 'Get back across the sea!')
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(705, 'Maybe death will take me home...')
+        );
+    } finally {
+        GlobalState.sessionsByToken.delete(client.token);
+    }
+
+    const thoughts = client.sentPackets
+        .filter((entry) => entry.id === 0x76)
+        .map((entry) => decodeRoomThought(entry.payload));
+
+    assert.deepEqual(thoughts, [
+        {
+            entityId: 1,
+            text: 'Get back across the sea!'
+        },
+        {
+            entityId: 1,
+            text: 'Maybe death will take me home...'
+        }
+    ]);
+}
+
+function testBlackRoseMireSideQuestPlayerRoomThoughtsRemapFromEnemyToPlayerEntity(): void {
+    const dataDir = path.resolve(__dirname, '../data');
+    DialogueTranslationLoader.load(dataDir);
+
+    const client = createFakeClient();
+    client.character.dialogueLanguage = 'pt-br';
+    client.character.gender = 'Female';
+    client.token = 51014;
+    client.currentLevel = 'SRN_Mission4';
+    client.levelInstanceId = '';
+    client.playerSpawned = true;
+    client.clientEntID = 1;
+    client.entities.set(704, {
+        id: 704,
+        name: 'BlackRoseMireEnemy',
+        team: EntityTeam.ENEMY
+    });
+
+    GlobalState.sessionsByToken.set(client.token, client as never);
+    try {
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, "This must've been Lord Yornak's gardens.")
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, 'Was that a man or a plant?')
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, "And you're the Vizier. You look thinner in your banners.")
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, "I think it's time I finally met The Vizier.")
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, "Perhaps it's the work of the Vizier those guards mentioned.")
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, 'Made you a monster.')
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, 'Once I clear the monsters from around Castle Hocke.')
+        );
+        SocialHandler.handleRoomThought(
+            client as never,
+            createRoomThoughtPacket(704, "The road's clear, now soldiers from Wolf's End can join me...")
+        );
+    } finally {
+        GlobalState.sessionsByToken.delete(client.token);
+    }
+
+    const thoughts = client.sentPackets
+        .filter((entry) => entry.id === 0x76)
+        .map((entry) => decodeRoomThought(entry.payload));
+
+    assert.deepEqual(thoughts, [
+        {
+            entityId: 1,
+            text: 'Esses devem ter sido os jardins do Lorde Yornak.'
+        },
+        {
+            entityId: 1,
+            text: 'Aquilo era um homem ou uma planta?'
+        },
+        {
+            entityId: 1,
+            text: 'Então você é o tal Vizir. Você parecia mais magro nos estandartes.'
+        },
+        {
+            entityId: 1,
+            text: 'Acho que está na hora de eu finalmente conhecer o Vizir.'
+        },
+        {
+            entityId: 1,
+            text: 'Talvez seja obra do Vizir que aqueles guardas mencionaram.'
+        },
+        {
+            entityId: 1,
+            text: 'Fez de você um monstro, isso sim.'
+        },
+        {
+            entityId: 1,
+            text: 'Assim que eu eliminar os monstros ao redor do Castelo Hocke.'
+        },
+        {
+            entityId: 1,
+            text: 'A estrada está livre. Agora os soldados de Fim do Lobo podem se juntar a mim...'
+        }
+    ]);
+}
+
+function testPortugueseCompoundGenderChoices(): void {
+    const dataDir = path.resolve(__dirname, '../data');
+    DialogueTranslationLoader.load(dataDir);
+
+    assert.strict.equal(
+        DialogueTranslationLoader.translateText('General Svar will give 1000 gold to whoever kills the human!', 'pt-br', {
+            playerGender: 'Male'
+        }),
+        'O General Svar dará 1000 moedas de ouro a quem matar o humano!'
+    );
+    assert.strict.equal(
+        DialogueTranslationLoader.translateText('General Svar will give 1000 gold to whoever kills the human!', 'pt-br', {
+            playerGender: 'Female'
+        }),
+        'O General Svar dará 1000 moedas de ouro a quem matar a humana!'
+    );
+    assert.strict.equal(
+        DialogueTranslationLoader.translateText('Get the human', 'pt-br', {
+            playerGender: 'Female'
+        }),
+        'Peguem a humana!'
+    );
+    assert.strict.equal(
+        DialogueTranslationLoader.translateText("Um, thanks, I'll consider it.", 'pt-br', {
+            playerGender: 'Female'
+        }),
+        'Hm, obrigado, vou pensar melhor nisso.'
+    );
+}
+
 function testWolfsEndTimedSkitSegmentsUseTranslations(): void {
     const dataDir = path.resolve(__dirname, '../data');
     DialogueTranslationLoader.load(dataDir);
@@ -1169,6 +1413,20 @@ function testPortugueseClassPlaceholderLocalizesPlayerClass(): void {
     assert.equal(
         DialogueTranslationLoader.translateText('If only a hero could lead the way.', 'pt-br', { playerGender: 'Female' }),
         'Se ao menos uma heroína pudesse nos guiar.'
+    );
+}
+
+function testPortugueseDynamicUpgradeRequirementLocalizesLevel(): void {
+    const dataDir = path.resolve(__dirname, '../data');
+    DialogueTranslationLoader.load(dataDir);
+
+    assert.equal(
+        DialogueTranslationLoader.translateText('Must be level 15 to upgrade', 'pt-br'),
+        'É necessário nível 15 para melhorar'
+    );
+    assert.equal(
+        DialogueTranslationLoader.translateText('Unlocks Rank 2 charm recipes', 'pt-br'),
+        'Libera receitas de gemas de Ranque 2'
     );
 }
 
@@ -2209,8 +2467,9 @@ function testEmeraldGladesRoomDialogueTranslationsCoverExtractedSource(): void {
 async function main(): Promise<void> {
     await testLanguageCommandSwitchesToTurkishWithoutBroadcasting();
     await testLanguageCommandSwitchesBackToEnglish();
+    await testBackslashLanguageCommandAliasSwitchesBackToEnglish();
     await testPortugueseLanguageCommandAliasesSwitchToBrazilianPortuguese();
-    await testPortuguesePortugalAliasIsNotAcceptedAsBrazilianPortuguese();
+    await testInvalidLanguageCommandIsNotBroadcast();
     testTurkishDialogueFilesCoverAllSourceDialogue();
     testTurkishRoomThoughtUsesTranslationTable();
     testTurkishRoomThoughtFallbackPreventsEnemyEnglish();
@@ -2226,11 +2485,16 @@ async function main(): Promise<void> {
     testFelbridgeMeylourLiveSkitSegmentsUseTranslations();
     testBridgeTownMissionsLiveSkitSegmentsUseTranslations();
     testBlackRoseMireLiveSkitSegmentsUseTranslations();
+    testPlayerRoomThoughtsRemapFromEnemyToPlayerEntity();
+    testLostAtSeaPlayerRoomThoughtsRemapFromEnemyToPlayerEntity();
+    testBlackRoseMireSideQuestPlayerRoomThoughtsRemapFromEnemyToPlayerEntity();
+    testPortugueseCompoundGenderChoices();
     testWolfsEndTimedSkitSegmentsUseTranslations();
     testValhavenWelcomePartyLiveSkitSegmentsUseTranslations();
     testCapstoneRoomDialogueTranslationsCoverExtractedSource();
     testFelbridgeMeylourRoomDialogueTranslationsCoverExtractedSource();
     testPortugueseClassPlaceholderLocalizesPlayerClass();
+    testPortugueseDynamicUpgradeRequirementLocalizesLevel();
     testPortugueseNpcClassPlaceholderLocalizesPlayerClass();
     testBridgeTownMissionsRoomDialogueTranslationsCoverExtractedSource();
     testBlackRoseMireRoomDialogueTranslationsCoverExtractedSource();

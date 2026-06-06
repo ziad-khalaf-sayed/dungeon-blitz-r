@@ -1209,20 +1209,19 @@ export class LevelHandler {
         bossName: string,
         levelInstanceId: string = ''
     ): void {
-        const bb = new BitBuffer(false);
-        bb.writeMethod4(Math.max(0, roomId));
-        bb.writeMethod4(bossId);
-        bb.writeMethod26(bossName);
-        bb.writeMethod4(0);
-        bb.writeMethod26('');
-        const payload = bb.toBuffer();
         const scopeKey = getLevelScopeKey(levelName, levelInstanceId);
 
         for (const other of GlobalState.sessionsByToken.values()) {
             if (!other.playerSpawned || getClientLevelScope(other) !== scopeKey) {
                 continue;
             }
-            other.send(0xAC, payload);
+            const bb = new BitBuffer(false);
+            bb.writeMethod4(Math.max(0, roomId));
+            bb.writeMethod4(bossId);
+            bb.writeMethod26(LevelHandler.translateDisplayText(other, bossName));
+            bb.writeMethod4(0);
+            bb.writeMethod26('');
+            other.send(0xAC, bb.toBuffer());
         }
         noteDungeonRunBossCutscene(scopeKey, roomId, bossId);
     }

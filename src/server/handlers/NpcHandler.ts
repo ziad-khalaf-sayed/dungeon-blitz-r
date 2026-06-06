@@ -782,7 +782,10 @@ export class NpcHandler {
     private static sendResolvedDialogue(client: Client, npcId: number, dialogueId: number, missionId: number): void {
         const language = NpcHandler.getDialogueLanguage(client.character);
         if (language !== NpcHandler.DEFAULT_DIALOGUE_LANGUAGE) {
-            const localizedText = MissionDialogueLoader.getDialogueText(missionId, dialogueId, language);
+            const localizedText = MissionDialogueLoader.getDialogueText(missionId, dialogueId, language, {
+                playerClass: client.character?.class,
+                playerGender: client.character?.gender
+            });
             if (localizedText) {
                 NpcHandler.sendNpcBubble(client, npcId, localizedText);
                 return;
@@ -805,7 +808,11 @@ export class NpcHandler {
             MissionDialogueLoader.getDialogueText(
                 NpcHandler.FIRST_MISSION_ID,
                 4,
-                NpcHandler.getDialogueLanguage(client.character)
+                NpcHandler.getDialogueLanguage(client.character),
+                {
+                    playerClass: client.character?.class,
+                    playerGender: client.character?.gender
+                }
             )
         );
 

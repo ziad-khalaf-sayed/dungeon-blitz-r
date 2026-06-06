@@ -147,7 +147,7 @@ export class SocialHandler {
         const portSuffix = Config.STATIC_PORT === 80 ? '' : `:${Config.STATIC_PORT}`;
         const url = new URL(`http://${Config.HOST}${portSuffix}/p/cbp/DungeonBlitz.swf`);
         url.searchParams.set('fv', 'cbw');
-        url.searchParams.set('gv', 'cbv');
+        url.searchParams.set('gv', 'cbw');
         url.searchParams.set('lang', language);
         return url.toString();
     }
@@ -663,8 +663,25 @@ export class SocialHandler {
     }
 
     private static isEnemyRoomThought(client: Client, entityId: number): boolean {
-        const entity = client.entities?.get?.(entityId);
+        const entity =
+            client.entities?.get?.(entityId) ??
+            GlobalState.levelEntities.get(getClientLevelScope(client))?.get(entityId) ??
+            GlobalState.levelEntities.get(String(client.currentLevel ?? ''))?.get(entityId);
         return Number(entity?.team ?? 0) === EntityTeam.ENEMY;
+    }
+
+    private static resolveRoomThoughtEntityId(client: Client, entityId: number, text: string): number {
+        const playerEntityId = Number(client.clientEntID ?? 0);
+        if (
+            playerEntityId > 0 &&
+            entityId !== playerEntityId &&
+            SocialHandler.isEnemyRoomThought(client, entityId) &&
+            DialogueTranslationLoader.isPlayerRoomThoughtText(text)
+        ) {
+            return playerEntityId;
+        }
+
+        return entityId;
     }
 
     private static translateRoomThought(client: Client, entityId: number, text: string, target: Client = client): string {
@@ -1074,7 +1091,7 @@ export class SocialHandler {
         const message = String(br.readMethod13() ?? '').trim();
 
         if (client.character) {
-            const match = /^\/lang:\s*(tr|en|br|ptbr)\s*$/i.exec(message);
+            const match = /^[\/\\]lang:\s*(tr|en|br|ptbr)\s*$/i.exec(message);
             if (match) {
                 const requestedLanguage = match[1].toLowerCase();
                 const nextLanguage = /^(?:br|ptbr)$/.test(requestedLanguage) ? 'pt-br' : requestedLanguage;
@@ -1116,6 +1133,11 @@ export class SocialHandler {
                         : 'Language saved. In Adobe Flash Player, restart the game to apply everything.'
                 );
                 SocialHandler.sendLocalizationReload(client, nextLanguage);
+                return;
+            }
+
+            if (/^[\/\\]lang(?::|\s|$)/i.test(message)) {
+                SocialHandler.sendChatStatus(client, 'Use /lang:en, /lang:tr ou /lang:ptbr.');
                 return;
             }
         }
@@ -1878,10 +1900,11 @@ export class SocialHandler {
         const br = new BitReader(data);
         const entityId = br.readMethod4();
         const text = br.readMethod13();
-        LevelHandler.maybeStartGoblinRiverBossIntroLock(client, entityId, text);
+        const speakerEntityId = SocialHandler.resolveRoomThoughtEntityId(client, entityId, text);
+        LevelHandler.maybeStartGoblinRiverBossIntroLock(client, speakerEntityId, text);
         MissionHandler.noteDungeonSkitActivity(client);
 
-        SocialHandler.relayRoomThought(client, entityId, text);
+        SocialHandler.relayRoomThought(client, speakerEntityId, text);
     }
 
     static handleStartSkit(client: Client, data: Buffer): void {
@@ -1889,10 +1912,11 @@ export class SocialHandler {
         const entityId = br.readMethod9();
         br.readMethod15();
         const text = br.readMethod26();
-        LevelHandler.maybeStartGoblinRiverBossIntroLock(client, entityId, text);
+        const speakerEntityId = SocialHandler.resolveRoomThoughtEntityId(client, entityId, text);
+        LevelHandler.maybeStartGoblinRiverBossIntroLock(client, speakerEntityId, text);
         MissionHandler.noteDungeonSkitActivity(client);
 
-        SocialHandler.relayRoomThought(client, entityId, text);
+        SocialHandler.relayRoomThought(client, speakerEntityId, text);
     }
 
     static handleEmoteBegin(client: Client, data: Buffer): void {

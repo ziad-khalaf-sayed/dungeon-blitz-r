@@ -220,19 +220,19 @@ function testStaticServerServesSingleSwfByDefault(): void {
     const selectedSwfUrl = (server as any).getSelectedSwfUrl() as string;
 
     assert.equal(path.basename(selectedSwfPath), 'DungeonBlitz.swf');
-    assert.equal(selectedSwfUrl, '/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbv');
+    assert.equal(selectedSwfUrl, '/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw');
     assert.equal(fs.existsSync(selectedSwfPath), true);
 }
 
 function testStaticServerCanonicalizesDirectSwfVersionParams(): void {
     const server = new StaticServer();
     const staleRequest = {
-        query: { fv: 'cbw', gv: 'cbw', lang: 'tr' },
+        query: { fv: 'cbw', gv: 'cbv', lang: 'tr' },
         headers: {},
         socket: { remoteAddress: '127.0.0.1' }
     };
     const canonicalRequest = {
-        query: { fv: 'cbw', gv: 'cbv' },
+        query: { fv: 'cbw', gv: 'cbw' },
         headers: {},
         socket: { remoteAddress: '127.0.0.1' }
     };
@@ -241,7 +241,7 @@ function testStaticServerCanonicalizesDirectSwfVersionParams(): void {
     assert.equal((server as any).isCanonicalSelectedSwfRequest(canonicalRequest), true);
     assert.equal(
         (server as any).getCanonicalSelectedSwfUrl(staleRequest),
-        '/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbv&lang=tr'
+        '/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=tr'
     );
 }
 
@@ -417,7 +417,8 @@ function testStaticServerBuildsLocalizedSwfTextByLocale(): void {
     assert.equal(englishBody.includes(turkishDiscipline), false);
     assert.equal(turkishBody.includes(englishDiscipline), false);
     assert.equal(turkishBody.includes(turkishDiscipline), true);
-    assertBodyIncludesText(portugueseBody, `UI_1.swf?rv=${SWF_RUNTIME_VERSION}`, 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'UI_1.swf', 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'UI_2.swf', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'DB_LOCALIZATION_RELOAD:', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbw&gv=cbw&lang=pt-br', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Nível da Masmorra: ', 'DungeonBlitz.swf pt-br');
@@ -437,6 +438,8 @@ function testStaticServerBuildsLocalizedSwfTextByLocale(): void {
     assertBodyIncludesText(portugueseBody, 'Não há jogadores nesta área.', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, '/conv <player>', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Convidar...', 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'Viajar para', 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'Masmorra', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Oficiais', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Guilda', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Grupo', 'DungeonBlitz.swf pt-br');
@@ -446,15 +449,19 @@ function testStaticServerBuildsLocalizedSwfTextByLocale(): void {
     assertBodyIncludesText(portugueseBody, '/party', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, '/say', 'DungeonBlitz.swf pt-br');
     assertBodyIncludesText(portugueseBody, 'Talvez o zelador saiba como abrir isso...', 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'Treinar Pet', 'DungeonBlitz.swf pt-br');
+    assertBodyIncludesText(portugueseBody, 'Chocar Ovo', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'http://localhost:8000/p/cbp/DungeonBlitz.swf?fv=cbq&gv=cbp&lang=pt-br', 'DungeonBlitz.swf pt-br');
+    assertBodyExcludesText(portugueseBody, `UI_1.swf?rv=${SWF_RUNTIME_VERSION}`, 'DungeonBlitz.swf pt-br');
+    assertBodyExcludesText(portugueseBody, `UI_2.swf?rv=${SWF_RUNTIME_VERSION}`, 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Baglanti Koptu', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Connection to the\nserver has been lost!', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Pantano da Rosa Negra', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Atualizar', 'DungeonBlitz.swf pt-br');
-    assertBodyExcludesText(portugueseBody, 'Viajar para', 'DungeonBlitz.swf pt-br');
+    assertBodyExcludesText(portugueseBody, 'Return to', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Movimento', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Grátis', 'DungeonBlitz.swf pt-br');
-    assertBodyExcludesText(portugueseBody, 'Treinar', 'DungeonBlitz.swf pt-br');
+    assertBodyExcludesText(portugueseBody, 'Train Pet', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Wait, I need to take the fork in the road', 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, "It's right below me", 'DungeonBlitz.swf pt-br');
     assertBodyExcludesText(portugueseBody, 'Maybe that old man knows how to open this...', 'DungeonBlitz.swf pt-br');
@@ -541,6 +548,9 @@ function testStaticServerLocalizesPortugueseTutorialAssetTags(): void {
     assertBodyIncludesText(ui4Body, 'gemas raras ou lendárias com mais chance', 'UI_4.swf');
     assertBodyIncludesText(ui4Body, 'Criar Gema', 'UI_4.swf');
     assertBodyIncludesText(ui4Body, 'Pegar Gema', 'UI_4.swf');
+    assertBodyIncludesText(ui4Body, 'Loja de Símbolos de Prata', 'UI_4.swf');
+    assertBodyIncludesText(ui4Body, 'Seus Símbolos:', 'UI_4.swf');
+    assertBodyIncludesText(ui4Body, 'OBTIDO', 'UI_4.swf');
     assertBodyIncludesText(ui4Body, 'Esta é a Torre da sua disciplina', 'UI_4.swf');
     assertBodyIncludesText(ui4Body, 'Treinar Talento', 'UI_4.swf');
     assertBodyIncludesText(ui4Body, 'Estes são Pontos de Talento Livres', 'UI_4.swf');
@@ -558,6 +568,9 @@ function testStaticServerLocalizesPortugueseTutorialAssetTags(): void {
     assertBodyExcludesText(ui4Body, 'Visit House', 'UI_4.swf');
     assertBodyExcludesText(ui4Body, 'Craft Charm', 'UI_4.swf');
     assertBodyExcludesText(ui4Body, 'Take Charm', 'UI_4.swf');
+    assertBodyExcludesText(ui4Body, 'Silver Sigil Store', 'UI_4.swf');
+    assertBodyExcludesText(ui4Body, 'Your Silver Sigil:', 'UI_4.swf');
+    assertBodyExcludesText(ui4Body, 'OWNED', 'UI_4.swf');
     assertBodyExcludesText(ui4Body, 'Discipline Towers', 'UI_4.swf');
     assertBodyExcludesText(ui4Body, 'Train Talent Point', 'UI_4.swf');
     assertBodyExcludesText(ui4Body, 'These are Talentstones', 'UI_4.swf');
@@ -628,6 +641,8 @@ function testStaticServerLocalizesPortugueseTutorialAssetTags(): void {
         'BÔNUS DE TEMPO',
         'PONTUAÇÃO TOTAL',
         'Ver Ranques',
+        'Viajar para',
+        'Masmorra',
         'RANQUE',
         'Pântano da Rosa Negra'
     ]) {
@@ -640,7 +655,7 @@ function testStaticServerLocalizesPortugueseTutorialAssetTags(): void {
     assertBodyExcludesText(uiBody, 'View Ranks', 'UI_1.swf');
     assertBodyExcludesText(uiBody, 'Pantano da Rosa Negra', 'UI_1.swf');
 
-    const cardTitleBounds = collectDefineEditTextXMax(uiBody, [85, 179, 180, 187, 431, 439, 482, 485, 493, 556, 558, 560, 625, 1136, 1141, 1271, 1272, 1287, 1288, 1289, 1290, 1291, 1303, 1305]);
+    const cardTitleBounds = collectDefineEditTextXMax(uiBody, [85, 179, 180, 187, 431, 439, 482, 485, 493, 556, 558, 560, 625, 1136, 1141, 1271, 1272, 1287, 1288, 1289, 1290, 1291, 1303, 1305, 2581, 2594, 2617]);
     assert.ok(Number(cardTitleBounds.get(85) ?? 0) >= 4400);
     assert.ok(Number(cardTitleBounds.get(179) ?? 0) > 0);
     assert.ok(Number(cardTitleBounds.get(179) ?? 0) >= 6400);
@@ -667,6 +682,9 @@ function testStaticServerLocalizesPortugueseTutorialAssetTags(): void {
     assert.ok(Number(cardTitleBounds.get(1291) ?? 0) >= 3400);
     assert.ok(Number(cardTitleBounds.get(1303) ?? 0) >= 2700);
     assert.ok(Number(cardTitleBounds.get(1305) ?? 0) >= 3820);
+    assert.ok(Number(cardTitleBounds.get(2581) ?? 0) >= 2600);
+    assert.ok(Number(cardTitleBounds.get(2594) ?? 0) >= 2200);
+    assert.ok(Number(cardTitleBounds.get(2617) ?? 0) >= 2600);
 
     const ui4TooltipBounds = collectDefineEditTextXMax(ui4Body, [375, 644, 645, 655, 656, 666, 667, 688, 689, 1001, 1015, 1702, 2019, 2023, 2027, 2038, 2320, 4000]);
     assert.ok(Number(ui4TooltipBounds.get(375) ?? 0) >= 8400);
