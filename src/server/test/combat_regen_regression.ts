@@ -2914,6 +2914,64 @@ async function testClientOnlyBossRegenHealsBossRankedEnemiesOnly(): Promise<void
     }
 }
 
+async function testFriedrichDisplayNameBossRegenAfterPlayerDeath(): Promise<void> {
+    ensureOriginalGameDataLoaded();
+
+    const scenarios = [
+        { levelName: 'JC_Mission3', playerName: 'FriedrichNormalDeath' },
+        { levelName: 'JC_Mission3Hard', playerName: 'FriedrichHardDeath' }
+    ];
+
+    for (const [scenarioIndex, scenario] of scenarios.entries()) {
+        resetState();
+
+        const nowMs = 118_000 + (scenarioIndex * 5_000);
+        const player = createFakeClient(60 + scenarioIndex, scenario.playerName, 31);
+        moveClientToLevel(player, scenario.levelName);
+        attachPlayerEntity(player);
+
+        const bossId = 900060 + scenarioIndex;
+        const boss = createRegenHostile(bossId, 'Prince Friedrich Hocke', player.currentRoomId, {
+            displayName: 'Prince Friedrich Hocke',
+            characterName: 'Prince Friedrich Hocke',
+            entRank: '',
+            hp: 400,
+            maxHp: 1000,
+            lastCombatActivityAt: 0,
+            aggroTargetEntityId: player.clientEntID,
+            aggroTargetToken: player.token
+        });
+
+        player.entities.set(bossId, boss);
+        player.knownEntityIds.add(bossId);
+        GlobalState.sessionsByToken.set(player.token, player as never);
+
+        const request = new BitBuffer(false);
+        request.writeMethod15(false);
+
+        const originalDateNow = Date.now;
+        try {
+            Date.now = () => nowMs;
+            await CombatHandler.handleRequestRespawn(player as never, request.toBuffer());
+            assert.equal(boss.hp, 410, `${scenario.levelName} Friedrich should get the immediate death regen tick`);
+
+            Date.now = () => nowMs + 1_000;
+            CombatHandler.processOutOfCombatRegen(getClientLevelScope(player as never), Date.now());
+
+            assert.equal(boss.hp, 420, `${scenario.levelName} Friedrich should keep regenerating after player death`);
+            const regenPackets = player.sentPackets
+                .filter((packet) => packet.id === 0x78)
+                .map((packet) => parseRegenPacket(packet.payload));
+            assert.deepEqual(regenPackets.filter((packet) => packet.entityId === bossId), [
+                { entityId: bossId, amount: 10 },
+                { entityId: bossId, amount: 10 }
+            ]);
+        } finally {
+            Date.now = originalDateNow;
+        }
+    }
+}
+
 async function testAuthoritativeDeadPlayerStateAllowsBossRegen(): Promise<void> {
     resetState();
     ensureOriginalGameDataLoaded();
@@ -3028,6 +3086,7 @@ async function run(): Promise<void> {
     testEscapedLivePlayerOutsideBossAggroDoesNotArmBossRegen();
     await testDungeonBossRegenUsesFetchedBossList();
     await testClientOnlyBossRegenHealsBossRankedEnemiesOnly();
+    await testFriedrichDisplayNameBossRegenAfterPlayerDeath();
     await testAuthoritativeDeadPlayerStateAllowsBossRegen();
     console.log('combat_regen_regression: ok');
 }
