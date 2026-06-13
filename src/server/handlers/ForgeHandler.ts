@@ -751,6 +751,12 @@ export class ForgeHandler {
             }
             ForgeHandler.completeActiveForgeNow(forgeState);
             await ForgeHandler.saveCharacter(client);
+            ForgeHandler.logForgeEvent('speedup-completed', client, {
+                primary,
+                clientIdolCost: idolCost,
+                chargedIdols: 0,
+                mammothIdols: Number(client.character.mammothIdols ?? 0)
+            });
             ForgeHandler.sendForgeResultPacket(client, forgeState);
             return;
         }
@@ -771,6 +777,12 @@ export class ForgeHandler {
         ForgeHandler.completeActiveForgeNow(forgeState);
 
         await ForgeHandler.saveCharacter(client);
+        ForgeHandler.logForgeEvent('speedup-completed', client, {
+            primary,
+            clientIdolCost: idolCost,
+            chargedIdols: authoritativeCost,
+            mammothIdols: Number(client.character.mammothIdols ?? 0)
+        });
         ForgeHandler.sendForgeResultPacket(client, forgeState);
     }
 

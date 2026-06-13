@@ -81,6 +81,7 @@ function nopPaddedPushInt(valueIndex: number, oldLength: number): Buffer {
 
 function findPatches(swfPath: string): {
   patches: BytePatch[];
+  oldFirstCraftShortcutCount: number;
   oldExtendedCount: number;
   oldFallbackCount: number;
   patchedCount: number;
@@ -114,6 +115,7 @@ function findPatches(swfPath: string): {
   const code = ctx.body.subarray(methodBody.codeStart, methodBody.codeStart + methodBody.codeLen);
   const instructions = disassemble(code, "class_86.GetTimeAfterBonuses");
   const patches: BytePatch[] = [];
+  let oldFirstCraftShortcutCount = 0;
   let oldExtendedCount = 0;
   let oldFallbackCount = 0;
   let patchedCount = 0;
@@ -123,6 +125,30 @@ function findPatches(swfPath: string): {
     const first = instructions[index];
     const second = instructions[index + 1];
     const third = instructions[index + 2];
+
+    if (
+      first.opcode === 0x60 &&
+      u30Name(abc, first) === "Game" &&
+      second.opcode === 0x66 &&
+      u30Name(abc, second) === "const_181" &&
+      !seenRespecBranch
+    ) {
+      const oldLength = first.size + second.size;
+      patches.push({
+        key: `class_86.GetTimeAfterBonuses.firstCraftShortcut.${methodBody.codeStart + first.offset}`,
+        start: methodBody.codeStart + first.offset,
+        end: methodBody.codeStart + second.offset + second.size,
+        data: nopPaddedPushInt(threeDayIndex, oldLength),
+        detail: "remove 3 minute first-craft shortcut from Respec Stone duration path",
+      });
+      oldFirstCraftShortcutCount += 1;
+      continue;
+    }
+
+    if (pushIntValue(abc, first) === RESPEC_FORGE_SECONDS && !seenRespecBranch) {
+      patchedCount += 1;
+      continue;
+    }
 
     if (
       first.opcode === 0x60 &&
@@ -175,15 +201,20 @@ function findPatches(swfPath: string): {
     }
   }
 
-  return { patches, oldExtendedCount, oldFallbackCount, patchedCount };
+  return { patches, oldFirstCraftShortcutCount, oldExtendedCount, oldFallbackCount, patchedCount };
 }
 
 function patchSwf(swfPath: string, verify: boolean): void {
   const firstPass = findPatches(swfPath);
   if (verify) {
-    if (firstPass.oldExtendedCount > 0 || firstPass.oldFallbackCount > 0 || firstPass.patchedCount !== 2) {
+    if (
+      firstPass.oldFirstCraftShortcutCount > 0 ||
+      firstPass.oldExtendedCount > 0 ||
+      firstPass.oldFallbackCount > 0 ||
+      firstPass.patchedCount !== 3
+    ) {
       throw new PatchError(
-        `Respec forge duration patch missing: oldExtended=${firstPass.oldExtendedCount}, oldFallback=${firstPass.oldFallbackCount}, patched=${firstPass.patchedCount}`,
+        `Respec forge duration patch missing: oldFirstCraftShortcut=${firstPass.oldFirstCraftShortcutCount}, oldExtended=${firstPass.oldExtendedCount}, oldFallback=${firstPass.oldFallbackCount}, patched=${firstPass.patchedCount}`,
       );
     }
     console.log("Respec forge duration patch verified.");
@@ -191,17 +222,17 @@ function patchSwf(swfPath: string, verify: boolean): void {
   }
 
   if (firstPass.patches.length === 0) {
-    if (firstPass.patchedCount === 2) {
+    if (firstPass.patchedCount === 3) {
       console.log("Respec forge duration patch already applied.");
       return;
     }
     throw new PatchError(
-      `Expected Respec forge duration patch points, found oldExtended=${firstPass.oldExtendedCount}, oldFallback=${firstPass.oldFallbackCount}, patched=${firstPass.patchedCount}`,
+      `Expected Respec forge duration patch points, found oldFirstCraftShortcut=${firstPass.oldFirstCraftShortcutCount}, oldExtended=${firstPass.oldExtendedCount}, oldFallback=${firstPass.oldFallbackCount}, patched=${firstPass.patchedCount}`,
     );
   }
 
-  if (firstPass.patches.length > 2) {
-    throw new PatchError(`Expected at most two Respec forge duration patches, found ${firstPass.patches.length}`);
+  if (firstPass.patches.length > 3) {
+    throw new PatchError(`Expected at most three Respec forge duration patches, found ${firstPass.patches.length}`);
   }
 
   const ctx = parseSwf(swfPath);
@@ -213,9 +244,14 @@ function patchSwf(swfPath: string, verify: boolean): void {
   writeSwf(ctx, body, delta);
 
   const secondPass = findPatches(swfPath);
-  if (secondPass.oldExtendedCount > 0 || secondPass.oldFallbackCount > 0 || secondPass.patchedCount !== 2) {
+  if (
+    secondPass.oldFirstCraftShortcutCount > 0 ||
+    secondPass.oldExtendedCount > 0 ||
+    secondPass.oldFallbackCount > 0 ||
+    secondPass.patchedCount !== 3
+  ) {
     throw new PatchError(
-      `Respec forge duration patch did not verify after write: oldExtended=${secondPass.oldExtendedCount}, oldFallback=${secondPass.oldFallbackCount}, patched=${secondPass.patchedCount}`,
+      `Respec forge duration patch did not verify after write: oldFirstCraftShortcut=${secondPass.oldFirstCraftShortcutCount}, oldExtended=${secondPass.oldExtendedCount}, oldFallback=${secondPass.oldFallbackCount}, patched=${secondPass.patchedCount}`,
     );
   }
 
